@@ -6,18 +6,61 @@ Sistema de gerenciamento de marina para reservas de barcos.
 
 ```
 marina-boat-app/
+├── components/
+│   └── ui.tsx            # Componentes de UI reutilizáveis
 ├── supabase/
 │   └── migrations/       # Arquivos de migração do banco de dados
-├── src/                  # Código fonte da aplicação
+├── App.tsx               # Componente principal
+├── index.tsx             # Ponto de entrada
+├── index.html            # HTML principal
+├── types.ts              # Tipos TypeScript
+├── constants.ts          # Constantes da aplicação
+├── package.json          # Dependências
+├── vite.config.ts        # Configuração do Vite
+├── tsconfig.json         # Configuração do TypeScript
 ├── .gitignore
 └── README.md
 ```
 
 ## 🛠️ Tecnologias
 
+- **Frontend**: React + TypeScript + Vite
 - **Backend/Database**: Supabase (PostgreSQL + Auth + Storage)
 - **Deploy**: Coolify (Self-hosted)
 - **Versionamento**: Git/GitHub
+
+## 🚀 Executar Localmente
+
+### Pré-requisitos
+
+- Node.js 18+
+- Git
+
+### Instalação
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/odjavan/marina-boat-app.git
+   cd marina-boat-app
+   ```
+
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+
+3. Configure as variáveis de ambiente:
+   ```bash
+   cp .env.example .env.local
+   # Edite .env.local com suas chaves
+   ```
+
+4. Execute o app:
+   ```bash
+   npm run dev
+   ```
+
+5. Acesse: http://localhost:5173
 
 ## 🗄️ Banco de Dados
 
@@ -35,44 +78,14 @@ Todas as tabelas possuem RLS habilitado para garantir que:
 - Usuários só acessam seus próprios dados
 - Admins têm acesso completo (quando aplicável)
 
-## 🚀 Setup Local
-
-### Pré-requisitos
-
-- Node.js 18+
-- Supabase CLI
-- Git
-
-### Configuração do Supabase
-
-1. Instale a CLI do Supabase:
-   ```bash
-   npm install -g supabase
-   ```
-
-2. Faça login:
-   ```bash
-   supabase login
-   ```
-
-3. Vincule ao projeto remoto:
-   ```bash
-   supabase link --project-ref SEU_PROJECT_REF
-   ```
-
-4. Para gerar migrações a partir do banco existente:
-   ```bash
-   supabase db pull
-   ```
-
 ## 📝 Variáveis de Ambiente
 
 Crie um arquivo `.env.local` (nunca commitar):
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=sua_url_aqui
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key_aqui
-SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
+VITE_SUPABASE_URL=sua_url_aqui
+VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui
+GEMINI_API_KEY=sua_gemini_key_aqui
 ```
 
 ## 🔒 Segurança
@@ -80,6 +93,14 @@ SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
 - Nunca commitar arquivos `.env` ou chaves de API
 - Usar sempre RLS nas tabelas do Supabase
 - Service Role Key apenas no backend/server-side
+
+## 📦 Scripts Disponíveis
+
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Inicia servidor de desenvolvimento |
+| `npm run build` | Gera build de produção |
+| `npm run preview` | Preview do build de produção |
 
 ## 📄 Licença
 
