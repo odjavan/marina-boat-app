@@ -1,4 +1,7 @@
+// ... imports
 import { User, Vessel, ServiceRequest } from './types';
+
+// ... variables
 
 export const CURRENT_USER_CLIENT: User = {
   id: 'u1',
@@ -20,6 +23,20 @@ export const CURRENT_USER_EMPLOYEE: User = {
   created_at: '2022-05-20'
 };
 
+export const MOCK_CLIENTS_LIST: User[] = [
+  CURRENT_USER_CLIENT,
+  {
+    id: 'u2',
+    name: 'Ana Souza',
+    email: 'ana.souza@email.com',
+    phone: '(11) 98765-4321',
+    user_type: 'cliente',
+    avatar_initial: 'A',
+    created_at: '2023-02-10',
+    cpf: '123.456.789-00'
+  }
+];
+
 export const MOCK_VESSELS: Vessel[] = [
   {
     id: 'v1',
@@ -29,7 +46,10 @@ export const MOCK_VESSELS: Vessel[] = [
     brand: 'Phantom',
     model: '303',
     year: 2022,
-    length: '30 pés'
+    length: '30 pés',
+    registration_number: '442123984-2',
+    photos: [],
+    documents: []
   },
   {
     id: 'v2',
@@ -39,7 +59,10 @@ export const MOCK_VESSELS: Vessel[] = [
     brand: 'Bavaria',
     model: '46',
     year: 2020,
-    length: '46 pés'
+    length: '46 pés',
+    registration_number: '553214098-1',
+    photos: [],
+    documents: []
   },
   {
     id: 'v3',
@@ -49,7 +72,10 @@ export const MOCK_VESSELS: Vessel[] = [
     brand: 'Ferretti',
     model: '720',
     year: 2023,
-    length: '72 pés'
+    length: '72 pés',
+    registration_number: '998877665-0',
+    photos: [],
+    documents: []
   }
 ];
 

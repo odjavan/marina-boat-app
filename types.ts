@@ -8,9 +8,10 @@ export interface User {
   user_type: UserType;
   avatar_initial: string;
   created_at: string;
+  cpf?: string;
 }
 
-export type VesselType = 'Lancha' | 'Veleiro' | 'Iate' | 'Catamarã';
+export type VesselType = 'Lancha' | 'Veleiro' | 'Iate' | 'Jet Ski' | 'Outros';
 
 export interface Vessel {
   id: string;
@@ -21,6 +22,9 @@ export interface Vessel {
   model: string;
   year: number;
   length: string;
+  registration_number: string;
+  photos: string[];
+  documents: string[];
 }
 
 export type ServiceCategory = 'Limpeza' | 'Abastecimento' | 'Manutenção Preventiva' | 'Manutenção Corretiva';
@@ -39,4 +43,4 @@ export interface ServiceRequest {
   created_at: string;
 }
 
-export type ViewState = 'dashboard' | 'vessels' | 'services' | 'profile' | 'settings' | 'help';
+export type ViewState = 'dashboard' | 'vessels' | 'services' | 'clients' | 'profile' | 'settings' | 'help';
