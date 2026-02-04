@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // --- Card ---
-export interface CardProps extends React.ComponentProps<'div'> {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
@@ -18,7 +18,7 @@ export const Card = ({ children, className, ...props }: CardProps) => (
 );
 
 // --- Button ---
-export interface ButtonProps extends React.ComponentProps<'button'> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   children?: React.ReactNode;
@@ -40,7 +40,7 @@ export const Button = ({ children, className, variant = 'primary', size = 'md', 
   };
 
   return (
-    <button 
+    <button
       className={cn("font-medium rounded-lg transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none", variants[variant], sizes[size], className)}
       {...props}
     >
@@ -50,7 +50,7 @@ export const Button = ({ children, className, variant = 'primary', size = 'md', 
 };
 
 // --- Badge ---
-export interface BadgeProps extends React.ComponentProps<'span'> {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'slate';
 }
@@ -73,21 +73,21 @@ export const Badge = ({ children, color = 'blue', className, ...props }: BadgePr
 };
 
 // --- Inputs ---
-export interface InputProps extends React.ComponentProps<'input'> {}
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> { }
 
 export const Input = ({ className, ...props }: InputProps) => (
-  <input 
+  <input
     className={cn("w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500", className)}
     {...props}
   />
 );
 
-export interface SelectProps extends React.ComponentProps<'select'> {
+export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children?: React.ReactNode;
 }
 
 export const Select = ({ className, children, ...props }: SelectProps) => (
-  <select 
+  <select
     className={cn("w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all appearance-none cursor-pointer", className)}
     {...props}
   >
@@ -95,7 +95,7 @@ export const Select = ({ className, children, ...props }: SelectProps) => (
   </select>
 );
 
-export interface LabelProps extends React.ComponentProps<'label'> {
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children?: React.ReactNode;
 }
 
@@ -115,7 +115,7 @@ export interface DialogProps {
 
 export const Dialog = ({ isOpen, onClose, title, children }: DialogProps) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -123,7 +123,7 @@ export const Dialog = ({ isOpen, onClose, title, children }: DialogProps) => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 18 18" /></svg>
           </button>
         </div>
         {children}
