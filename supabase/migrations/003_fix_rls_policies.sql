@@ -1,9 +1,10 @@
 -- ============================================================
--- Migração 003: Correção de RLS para Catálogo de Serviços
+-- Migração 003: Correção de RLS para Catálogo de Serviços (Versão Segura)
 -- ============================================================
 
--- Permitir que admins gerenciem o catálogo de serviços
--- (Atualmente estava apenas "Anyone can view", faltando permissões de escrita)
+-- Remover políticas antigas se existirem para evitar conflito
+DROP POLICY IF EXISTS "Admins can manage categories" ON public.service_categories;
+DROP POLICY IF EXISTS "Admins can manage services" ON public.services;
 
 -- 1. Categorias de Serviço
 CREATE POLICY "Admins can manage categories"
@@ -26,7 +27,3 @@ CREATE POLICY "Admins can manage services"
             WHERE id = auth.uid() AND role IN ('admin', 'funcionario')
         )
     );
-
--- ============================================================
--- FIM
--- ============================================================

@@ -58,25 +58,21 @@
         - button "Sair" [ref=e91] [cursor=pointer]:
           - img [ref=e92]
   - main [ref=e95]:
-    - generic [ref=e96]:
-      - generic:
-        - generic: Bem-vindo, Administrador!
-        - generic: "Erro ao cadastrar cliente: Could not find the 'cpf' column of 'profiles' in the schema cache"
-      - generic [ref=e98]:
-        - generic [ref=e99]:
-          - generic [ref=e100]:
-            - heading "Clientes Cadastrados" [level=2] [ref=e101]
-            - paragraph [ref=e102]: Gerencie os usuários da marina.
-          - button "Novo Cliente" [ref=e103] [cursor=pointer]:
-            - img [ref=e104]
-            - text: Novo Cliente
-        - table [ref=e107]:
-          - rowgroup [ref=e108]:
-            - row "Nome E-mail Telefone CPF Cadastro" [ref=e109]:
-              - columnheader "Nome" [ref=e110]
-              - columnheader "E-mail" [ref=e111]
-              - columnheader "Telefone" [ref=e112]
-              - columnheader "CPF" [ref=e113]
-              - columnheader "Cadastro" [ref=e114]
-          - rowgroup
+    - generic [ref=e98]:
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - heading "Clientes Cadastrados" [level=2] [ref=e101]
+          - paragraph [ref=e102]: Gerencie os usuários da marina.
+        - button "Novo Cliente" [ref=e103] [cursor=pointer]:
+          - img [ref=e104]
+          - text: Novo Cliente
+      - table [ref=e107]:
+        - rowgroup [ref=e108]:
+          - row "Nome E-mail Telefone CPF Cadastro" [ref=e109]:
+            - columnheader "Nome" [ref=e110]
+            - columnheader "E-mail" [ref=e111]
+            - columnheader "Telefone" [ref=e112]
+            - columnheader "CPF" [ref=e113]
+            - columnheader "Cadastro" [ref=e114]
+        - rowgroup
 ```
