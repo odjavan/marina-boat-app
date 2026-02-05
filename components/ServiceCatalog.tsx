@@ -59,8 +59,13 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({ onSelectService,
                 alert('Serviço criado com sucesso!');
             }
         } catch (error: any) {
-            alert('Erro ao criar serviço: ' + error.message);
+            if (error.message.includes('row-level security policy')) {
+                alert('Acesso Negado: Apenas administradores oficiais podem alterar o Catálogo. Você está usando uma conta de demonstração.');
+            } else {
+                alert('Erro ao criar serviço: ' + error.message);
+            }
         }
+
     };
 
     const filteredServices = services.filter(s => {

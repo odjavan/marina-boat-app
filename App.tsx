@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
 import { DataTable, type Column } from './components/DataTable';
+import { DebugEnv } from './components/DebugEnv';
 import { ServiceCatalog } from './components/ServiceCatalog';
 import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service } from './types';
 import {
@@ -168,6 +169,7 @@ const LoginScreen = () => {
           © 2024 Marina Boat. Todos os direitos reservados.
         </p>
       </div>
+      <DebugEnv />
     </div>
   );
 };
@@ -1688,8 +1690,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Initialize state lazily from localStorage to prevent "flash of login screen" on F5
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('marina_boat_user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!localStorage.getItem('marina_boat_user');
+  });
 
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [services, setServices] = useState<ServiceRequest[]>([]); // These are the REQUESTS
@@ -1701,25 +1710,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch Data on Auth
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchData();
-    }
-  }, [isAuthenticated]);
-
   const fetchData = async () => {
     setLoading(true);
 
     // Fetch Vessels
     const { data: vesselsData, error: vesselsError } = await supabase
-      .from('boats') // Updated table name
+      .from('boats')
       .select('*');
     if (vesselsError) console.error('Error fetching vessels:', vesselsError);
     else if (vesselsData) {
-      // Map DB columns to Frontend if needed, assuming direct map for now plus explicit archival check if needed?
-      // DB 'is_archived' needs to be handled?
-      // types.ts has 'is_archived', DB has 'is_archived'.
       setVessels(vesselsData as Vessel[]);
     }
 
@@ -1743,7 +1742,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .select('*')
       .eq('user_type', 'cliente');
     if (profilesError) console.error('Error fetching clients:', profilesError);
-    else if (profilesData) setClients(profilesData as User[]);
+    else if (profilesData) {
+      // Map profiles to include avatar_initial derived from name
+      const mappedClients = profilesData.map((p: any) => ({
+        ...p,
+        avatar_initial: p.name ? p.name.charAt(0).toUpperCase() : '?'
+      }));
+      setClients(mappedClients as User[]);
+    }
 
     setLoading(false);
   };
@@ -1767,15 +1773,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 3000);
   };
 
-  // Auth Logic
-  const login = (type: 'admin' | 'user') => {
-    if (type === 'admin') {
-      setCurrentUser(CURRENT_USER_EMPLOYEE);
-    } else {
-      setCurrentUser(CURRENT_USER_CLIENT);
+  // Fetch Data on Auth
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
     }
+  }, [isAuthenticated]);
+
+  // Auth Logic with Persistence
+  const login = (type: 'admin' | 'user') => {
+    let user: User;
+    if (type === 'admin') {
+      user = CURRENT_USER_EMPLOYEE;
+    } else {
+      user = CURRENT_USER_CLIENT;
+    }
+
+    // Ensure avatar_initial is present
+    const userWithAvatar = {
+      ...user,
+      avatar_initial: user.avatar_initial || (user.name ? user.name.charAt(0).toUpperCase() : '?')
+    };
+
+    setCurrentUser(userWithAvatar);
     setIsAuthenticated(true);
     setCurrentView('dashboard');
+    localStorage.setItem('marina_boat_user', JSON.stringify(userWithAvatar));
     addNotification(`Bem-vindo, ${type === 'admin' ? 'Administrador' : 'Cliente'}!`);
   };
 
@@ -1783,6 +1806,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView('dashboard');
+    localStorage.removeItem('marina_boat_user');
     addNotification("Você saiu do sistema.");
   };
 
@@ -1801,9 +1825,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Generating a random UUID-like string since we aren't using real Auth Signup yet for this "Admin creates User" flow
       // In real usage, Admin would invite user via email.
       // We will just insert into profiles.
+      id: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      }),
       user_type: 'cliente' as const,
-      avatar_initial: userData.name.charAt(0).toUpperCase(),
+      // avatar_initial removed as it is not in valid schema
     };
+
+
+
 
     const { data, error } = await supabase
       .from('profiles')
@@ -1811,12 +1842,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .select();
 
     if (error) {
-      addNotification("Erro ao cadastrar cliente: " + error.message);
-      console.error(error);
+      if (error.message.includes('row-level security policy')) {
+        addNotification("Acesso Negado: Criação de usuários restrita no modo Demo.");
+      } else {
+        addNotification("Erro ao cadastrar cliente: " + error.message);
+        console.error(error);
+      }
     } else if (data) {
       setClients([...clients, data[0] as User]);
       addNotification("Cliente cadastrado com sucesso!");
     }
+
   };
 
   const addVessel = async (vesselData: Omit<Vessel, 'id' | 'created_at'>) => {
@@ -1846,7 +1882,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateVessel = async (id: string, data: Partial<Vessel>) => {
-    const { error } = await supabase.from('vessels').update(data).eq('id', id);
+    const { error } = await supabase.from('boats').update(data).eq('id', id);
+
     if (error) {
       console.error(error);
       addNotification("Erro ao atualizar embarcação: " + error.message);
@@ -1857,7 +1894,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteVessel = async (id: string) => {
-    const { error } = await supabase.from('vessels').delete().eq('id', id);
+    const { error } = await supabase.from('boats').delete().eq('id', id);
     if (error) {
       console.error(error);
       addNotification("Erro ao excluir embarcação: " + error.message);

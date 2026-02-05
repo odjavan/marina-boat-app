@@ -3,19 +3,21 @@ $dest = "G:\Projeto\MarinaBoat"
 
 Write-Host "Iniciando sincronização de $source para $dest..."
 
-# Copia a pasta SRC (código fonte)
-Write-Host "Copiando pasta src..."
-robocopy "$source\src" "$dest\src" /E /IS /IT /XO
+# Copia pastas de código
+Write-Host "Copiando componentes..."
+robocopy "$source\components" "$dest\components" /E /IS /IT /XO
 
-# Copia a pasta PUBLIC (assets)
-Write-Host "Copiando pasta public..."
-robocopy "$source\public" "$dest\public" /E /IS /IT /XO
+Write-Host "Copiando lib..."
+robocopy "$source\lib" "$dest\lib" /E /IS /IT /XO
 
-# Copia arquivos de configuração da raiz (package.json, tsconfig, vite.config, etc)
-Write-Host "Copiando arquivos de configuração..."
-robocopy "$source" "$dest" package.json package-lock.json tsconfig.json vite.config.ts index.html postcss.config.js tailwind.config.js .gitignore README.md /IS /IT /XO
+Write-Host "Copiando supabase..."
+robocopy "$source\supabase" "$dest\supabase" /E /IS /IT /XO
+
+# Copia arquivos da raiz (App, config, etc)
+Write-Host "Copiando arquivos da raiz..."
+robocopy "$source" "$dest" App.tsx types.ts constants.ts package.json package-lock.json tsconfig.json vite.config.ts index.html postcss.config.js tailwind.config.js .gitignore README.md /IS /IT /XO
 
 Write-Host "--------------------------------------------------"
 Write-Host "Sincronização Concluída!"
-Write-Host "Agora você pode ir até G:\Projeto\MarinaBoat e fazer o commit/push das alterações."
+Write-Host "Arquivos copiados para $dest"
 Write-Host "--------------------------------------------------"
