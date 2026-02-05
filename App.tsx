@@ -6,6 +6,7 @@ import {
   Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
+import { DataTable, type Column } from './components/DataTable';
 import { ServiceCatalog } from './components/ServiceCatalog';
 import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service } from './types';
 import {
@@ -204,11 +205,12 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed md:static inset-y-0 left-0 z-30 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:translate-x-0 flex flex-col h-full",
+        "fixed md:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:translate-x-0 flex flex-col h-full",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Header */}
-        <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+        {/* Header */}
+        <div className="p-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
           <div className="p-2 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg shadow-lg">
             <Anchor className="text-white h-6 w-6" />
           </div>
@@ -223,7 +225,8 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
         </div>
 
         {/* Weather Widget */}
-        <div className="mx-4 mt-6 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900/30 border border-blue-100 dark:border-slate-700">
+        {/* Weather Widget */}
+        <div className="mx-3 mt-4 p-3 rounded-lg bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900/30 border border-blue-100 dark:border-slate-700">
           <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-3 tracking-wider">Status da Marina</h3>
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center p-2 rounded-lg bg-white/60 dark:bg-slate-800/60 shadow-sm transition-transform hover:scale-105">
@@ -260,7 +263,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-800 dark:to-slate-800 text-blue-600 dark:text-blue-400 shadow-sm translate-x-1"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
@@ -664,6 +667,62 @@ const Vessels = () => {
     setIsModalOpen(false);
   };
 
+  const vesselColumns: Column<Vessel>[] = [
+    {
+      header: 'Nome',
+      cell: (v) => (
+        <div className="flex items-center gap-3">
+          {v.photos?.[0] ? <img src={v.photos[0]} className="h-10 w-10 rounded object-cover" /> : <div className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center"><Ship size={16} /></div>}
+          <div>
+            <div className="font-medium text-slate-900 dark:text-white">{v.name}</div>
+            <div className="text-xs text-slate-500">{v.brand} {v.model}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Tipo',
+      width: '100px',
+      cell: (v) => <Badge color="blue">{v.type}</Badge>
+    },
+    {
+      header: 'Ano',
+      width: '80px',
+      accessorKey: 'year'
+    },
+    {
+      header: 'Comprimento',
+      width: '100px',
+      accessorKey: 'length'
+    }
+  ];
+
+  if (currentUser.user_type === 'funcionario') {
+    vesselColumns.push({
+      header: 'Proprietário',
+      cell: (v) => {
+        const owner = clients.find(c => c.id === v.owner_id);
+        return <span className="text-xs">{owner?.name || v.owner_id}</span>;
+      }
+    });
+    vesselColumns.push({
+      header: 'Docs',
+      width: '60px',
+      cell: (v) => v.documents.length > 0 ? <Badge color="slate">{v.documents.length}</Badge> : null
+    });
+  }
+
+  const vesselActions = (v: Vessel) => (
+    <div className="flex justify-end gap-1">
+      <Button variant="ghost" size="sm" onClick={() => { setEditingVessel(v); setIsModalOpen(true); }} title="Editar" className="h-8 w-8 p-0">
+        <Edit size={14} />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => { if (confirm('Excluir?')) deleteVessel(v.id); }} title="Excluir" className="h-8 w-8 p-0 text-slate-400 hover:text-red-500">
+        <Trash2 size={14} />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -740,94 +799,103 @@ const Vessels = () => {
           )}
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredVessels.map(vessel => (
-            <Card key={vessel.id} className="relative group flex flex-col overflow-hidden hover:shadow-2xl transition-all duration-300">
-              {/* Cover Photo */}
-              <div className="h-48 bg-slate-100 dark:bg-slate-800 relative">
-                {vessel.photos && vessel.photos.length > 0 ? (
-                  <img
-                    src={vessel.photos[0]}
-                    alt={vessel.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100 dark:from-slate-800 dark:to-slate-700">
-                    <Ship className="h-16 w-16 text-blue-200 dark:text-slate-600 mb-2" />
-                    <span className="text-xs text-slate-400">Sem foto</span>
-                  </div>
-                )}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/90 backdrop-blur-sm text-slate-800 shadow-sm">{vessel.type}</Badge>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="mb-4">
-                  <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate">{vessel.name}</h3>
-                  <p className="text-sm font-medium text-cyan-600 dark:text-cyan-400">{vessel.brand} {vessel.model}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-600 dark:text-slate-400 mt-auto">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Ano</span>
-                    <span className="font-medium text-slate-800 dark:text-slate-200">{vessel.year}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Comprimento</span>
-                    <span className="font-medium text-slate-800 dark:text-slate-200">{vessel.length}</span>
-                  </div>
-                  <div className="flex flex-col col-span-2 mt-2">
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Matrícula</span>
-                    <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 p-1 rounded w-fit">{vessel.registration_number || 'N/A'}</span>
+        currentUser.user_type === 'funcionario' ? (
+          <DataTable
+            data={filteredVessels}
+            columns={vesselColumns}
+            actions={vesselActions}
+            onRowClick={(v) => { setEditingVessel(v); setIsModalOpen(true); }}
+          />
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredVessels.map(vessel => (
+              <Card key={vessel.id} className="relative group flex flex-col overflow-hidden hover:shadow-2xl transition-all duration-300">
+                {/* Cover Photo */}
+                <div className="h-48 bg-slate-100 dark:bg-slate-800 relative">
+                  {vessel.photos && vessel.photos.length > 0 ? (
+                    <img
+                      src={vessel.photos[0]}
+                      alt={vessel.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100 dark:from-slate-800 dark:to-slate-700">
+                      <Ship className="h-16 w-16 text-blue-200 dark:text-slate-600 mb-2" />
+                      <span className="text-xs text-slate-400">Sem foto</span>
+                    </div>
+                  )}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-white/90 backdrop-blur-sm text-slate-800 shadow-sm">{vessel.type}</Badge>
                   </div>
                 </div>
 
-                {/* Owner Badge (Admin Only) */}
-                {currentUser.user_type === 'funcionario' && (
-                  <div className="text-xs text-slate-500 mt-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded border border-slate-200 dark:border-slate-800/50">
-                    <UserIcon size={12} className="text-slate-400" />
-                    <span className="truncate flex-1">
-                      <span className="font-bold">Proprietário:</span> {clients.find(c => c.id === vessel.owner_id || c.email === vessel.owner_id)?.name || vessel.owner_id}
-                    </span>
+                {/* Info */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate">{vessel.name}</h3>
+                    <p className="text-sm font-medium text-cyan-600 dark:text-cyan-400">{vessel.brand} {vessel.model}</p>
                   </div>
-                )}
 
-                {/* Footer Actions (Visual Only) */}
-                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                  {vessel.documents.length > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full">
-                      <FileText size={12} />
-                      {vessel.documents.length} Docs
+                  <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-600 dark:text-slate-400 mt-auto">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase text-slate-400 font-bold">Ano</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{vessel.year}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase text-slate-400 font-bold">Comprimento</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{vessel.length}</span>
+                    </div>
+                    <div className="flex flex-col col-span-2 mt-2">
+                      <span className="text-[10px] uppercase text-slate-400 font-bold">Matrícula</span>
+                      <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 p-1 rounded w-fit">{vessel.registration_number || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  {/* Owner Badge (Admin Only) */}
+                  {currentUser.user_type === 'funcionario' && (
+                    <div className="text-xs text-slate-500 mt-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded border border-slate-200 dark:border-slate-800/50">
+                      <UserIcon size={12} className="text-slate-400" />
+                      <span className="truncate flex-1">
+                        <span className="font-bold">Proprietário:</span> {clients.find(c => c.id === vessel.owner_id || c.email === vessel.owner_id)?.name || vessel.owner_id}
+                      </span>
                     </div>
                   )}
 
-                  {/* Edit/Delete Actions */}
-                  <div className="flex gap-2 ml-auto">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingVessel(vessel); setIsModalOpen(true); }}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                      title="Editar"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm('Tem certeza que deseja excluir esta embarcação?')) deleteVessel(vessel.id);
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  {/* Footer Actions (Visual Only) */}
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+                    {vessel.documents.length > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full">
+                        <FileText size={12} />
+                        {vessel.documents.length} Docs
+                      </div>
+                    )}
+
+                    {/* Edit/Delete Actions */}
+                    <div className="flex gap-2 ml-auto">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingVessel(vessel); setIsModalOpen(true); }}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Tem certeza que deseja excluir esta embarcação?')) deleteVessel(vessel.id);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )
       )}
 
       {/* New/Edit Vessel Modal */}
@@ -1107,6 +1175,60 @@ const Services = () => {
     );
   }
 
+  const statusColors: Record<ServiceStatus, any> = {
+    'Pendente': 'slate', 'Em Andamento': 'blue', 'Concluído': 'green',
+    'Cancelado': 'red', 'Em Análise': 'yellow', 'Agendado': 'purple'
+  };
+
+  const adminColumns: Column<ServiceRequest>[] = [
+    {
+      header: 'ID',
+      width: '60px',
+      cell: (s) => <span className="font-mono text-xs text-slate-500">#{s.id.slice(0, 4)}</span>
+    },
+    {
+      header: 'Status',
+      width: '120px',
+      cell: (s) => <Badge color={statusColors[s.status]}>{s.status}</Badge>
+    },
+    {
+      header: 'Serviço',
+      cell: (s) => (
+        <div>
+          <div className="font-medium text-slate-900 dark:text-white">{s.category}</div>
+          <div className="text-xs text-slate-500 line-clamp-1">{s.description} {s.urgency !== 'Normal' && <span className="text-red-500 font-bold">({s.urgency})</span>}</div>
+        </div>
+      )
+    },
+    {
+      header: 'Embarcação',
+      width: '150px',
+      cell: (s) => {
+        const v = vessels.find(v => v.id === s.boat_id);
+        return <span className="text-slate-600 dark:text-slate-400 text-xs">{v?.name || '-'}</span>;
+      }
+    },
+    {
+      header: 'Data',
+      width: '100px',
+      cell: (s) => <span className="text-xs text-slate-500">{new Date(s.preferred_date).toLocaleDateString('pt-BR')}</span>
+    }
+  ];
+
+  const adminActions = (s: ServiceRequest) => (
+    <div className="flex justify-end gap-1">
+      <Button variant="ghost" size="sm" onClick={() => setSelectedService(s)} title="Ver Detalhes" className="h-8 w-8 p-0">
+        <Eye size={14} />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => { setEditingService(s); setIsModalOpen(true); }} title="Editar" className="h-8 w-8 p-0">
+        <Edit size={14} />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => { if (confirm('Excluir?')) deleteService(s.id); }} title="Excluir" className="h-8 w-8 p-0 text-slate-400 hover:text-red-500">
+        <Trash2 size={14} />
+      </Button>
+    </div>
+  );
+
   const filteredServices = services.filter(s => {
     // 1. Role Filter
     if (currentUser.user_type === 'cliente') {
@@ -1218,23 +1340,32 @@ const Services = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className={cn(currentUser.user_type === 'funcionario' ? "" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3")}>
           {filteredServices.length === 0 ? (
             <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200">
               <p>Nenhuma solicitação encontrada nesta categoria.</p>
             </div>
           ) : (
-            filteredServices.map(service => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                vessels={vessels}
-                onStatusChange={currentUser.user_type === 'funcionario' ? updateServiceStatus : undefined}
-                onEdit={() => { setEditingService(service); setIsModalOpen(true); }}
-                onDelete={() => { if (confirm('Excluir este serviço?')) deleteService(service.id); }}
-                onViewDetails={() => setSelectedService(service)}
+            currentUser.user_type === 'funcionario' ? (
+              <DataTable
+                data={filteredServices}
+                columns={adminColumns}
+                actions={adminActions}
+                onRowClick={(s) => setSelectedService(s)}
               />
-            ))
+            ) : (
+              filteredServices.map(service => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  vessels={vessels}
+                  onStatusChange={currentUser.user_type === 'funcionario' ? updateServiceStatus : undefined}
+                  onEdit={() => { setEditingService(service); setIsModalOpen(true); }}
+                  onDelete={() => { if (confirm('Excluir este serviço?')) deleteService(service.id); }}
+                  onViewDetails={() => setSelectedService(service)}
+                />
+              ))
+            )
           )}
           {/* Modal de Solicitação */}
           <Dialog
@@ -1531,7 +1662,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         {/* Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 relative">
           {/* Simple Toast Notification */}
           {notifications.length > 0 && (
             <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
