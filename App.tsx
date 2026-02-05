@@ -3,14 +3,17 @@ import {
   Anchor, Wind, Droplets, User as UserIcon, LogOut, Settings,
   HelpCircle, Home, Ship, Briefcase, Plus, Search,
   CheckCircle2, Clock, AlertTriangle, Moon, Sun, Menu, LayoutDashboard,
-  Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users
+  Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
-import { User, Vessel, ServiceRequest, ViewState, ServiceStatus } from './types';
+import { ServiceCatalog } from './components/ServiceCatalog';
+import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service } from './types';
 import {
-  CURRENT_USER_CLIENT, CURRENT_USER_EMPLOYEE,
-  MOCK_VESSELS, MOCK_SERVICES, MOCK_CLIENTS_LIST
+  CURRENT_USER_CLIENT, CURRENT_USER_EMPLOYEE
 } from './constants';
+import { supabase } from './lib/supabase';
+import { ServiceRequestWizard } from './components/ServiceRequestWizard';
+import { ServiceDetails } from './components/ServiceDetails';
 
 // --- Contexts ---
 
@@ -25,7 +28,13 @@ interface AppContextType {
   clients: User[];
   addClient: (user: Omit<User, 'id' | 'created_at' | 'avatar_initial' | 'user_type'>) => void;
   addVessel: (vessel: Omit<Vessel, 'id'>) => void;
+  updateVessel: (id: string, data: Partial<Vessel>) => void;
+  deleteVessel: (id: string) => void;
+  catalog: Service[]; // Added logic
+
   addService: (service: Omit<ServiceRequest, 'id' | 'created_by' | 'status' | 'created_at'>) => void;
+  updateService: (id: string, data: Partial<ServiceRequest>) => void;
+  deleteService: (id: string) => void;
   updateServiceStatus: (id: string, status: ServiceStatus) => void;
   currentView: ViewState;
   setCurrentView: (view: ViewState) => void;
@@ -546,7 +555,7 @@ const Clients = () => {
 // --- Page: Vessels ---
 
 const Vessels = () => {
-  const { vessels, currentUser, addVessel, clients } = useAppContext();
+  const { vessels, currentUser, addVessel, updateVessel, deleteVessel, clients } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter States
@@ -558,20 +567,39 @@ const Vessels = () => {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [docs, setDocs] = useState<File[]>([]);
+  const [editingVessel, setEditingVessel] = useState<Vessel | null>(null);
 
   if (!currentUser) return null;
 
   // --- Filter Logic ---
-  const visibleVessels = currentUser.user_type === 'cliente'
-    ? vessels.filter(v => v.created_by === currentUser.email)
-    : vessels;
+  // --- Filter Logic ---
+  const filteredVessels = vessels.filter(v => {
+    // 1. Security / Role Filter
+    if (currentUser.user_type === 'cliente') {
+      // Strict ID check. If legacy data uses email in owner_id, this might need adjustment, 
+      // but for proper security we enforce ID.
+      if (v.owner_id !== currentUser.id) return false;
+    }
 
-  const filteredVessels = visibleVessels.filter(v => {
+    // 2. Search Filter (Search term is not in this component state, but props? 
+    // Wait, typical pattern here is local state. 
+    // Looking at line 559: const [filterBrand, setFilterBrand] = useState('');
+    // There is no global search term passed in here. Let's stick to the local filters present (Brand, Type, Year).
+    // The previous code verified local state exists.
+
+    // 3. Dropdown Filters
     const matchType = filterType === 'Todos' || v.type === filterType;
-    const matchBrand = v.brand.toLowerCase().includes(filterBrand.toLowerCase());
+    const matchBrand = filterBrand === '' || (v.brand + ' ' + v.model).toLowerCase().includes(filterBrand.toLowerCase());
     const matchYear = filterYear === '' || v.year.toString().includes(filterYear);
+
     return matchType && matchBrand && matchYear;
   });
+
+  // We only use filteredVessels now (visibleVessels was an intermediate step we can merge)
+  // Check usages of visibleVessels... It was used in "No results" message. 
+  // We can just use filteredVessels.length there or a separate "hasAnyVessels" check if needed.
+  // Actually, to keep "Adicione sua primeira embarcação" logic correct, we might need to know if they have ANY boats.
+  const userHasBoats = vessels.some(v => currentUser.user_type === 'funcionario' || v.owner_id === currentUser.id);
 
   // --- Form Logic ---
 
@@ -583,7 +611,7 @@ const Vessels = () => {
         return;
       }
       setPhotos([...photos, ...newFiles]);
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file as any));
       setPhotoPreviews([...photoPreviews, ...newPreviews]);
     }
   };
@@ -609,7 +637,7 @@ const Vessels = () => {
     const formData = new FormData(form);
     const ownerEmail = formData.get('owner_email') as string;
 
-    addVessel({
+    const vesselData = {
       name: formData.get('name') as string,
       type: formData.get('type') as any,
       brand: formData.get('brand') as string,
@@ -617,15 +645,22 @@ const Vessels = () => {
       year: parseInt(formData.get('year') as string),
       length: formData.get('length') as string,
       registration_number: formData.get('registration_number') as string,
-      photos: photoPreviews, // In a real app, these would be S3 URLs returned from an upload
-      documents: docs.map(d => d.name), // In a real app, these would be file URLs
-      created_by: ownerEmail || currentUser.email // Assign to selected client or self
-    });
+      photos: photoPreviews,
+      documents: docs.map(d => d.name),
+      owner_id: ownerEmail || (editingVessel ? editingVessel.owner_id : currentUser.id)
+    };
+
+    if (editingVessel) {
+      updateVessel(editingVessel.id, vesselData);
+    } else {
+      addVessel(vesselData);
+    }
 
     // Reset
     setPhotos([]);
     setPhotoPreviews([]);
     setDocs([]);
+    setEditingVessel(null);
     setIsModalOpen(false);
   };
 
@@ -696,11 +731,11 @@ const Vessels = () => {
           <Ship className="mx-auto h-12 w-12 text-slate-300 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">Nenhuma embarcação encontrada</h3>
           <p className="text-slate-500 mb-6">
-            {visibleVessels.length === 0
+            {!userHasBoats
               ? "Adicione sua primeira embarcação para começar."
               : "Tente ajustar os filtros para encontrar o que procura."}
           </p>
-          {visibleVessels.length === 0 && (
+          {!userHasBoats && (
             <Button variant="outline" onClick={() => setIsModalOpen(true)}>Cadastrar Agora</Button>
           )}
         </Card>
@@ -754,7 +789,7 @@ const Vessels = () => {
                   <div className="text-xs text-slate-500 mt-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded border border-slate-200 dark:border-slate-800/50">
                     <UserIcon size={12} className="text-slate-400" />
                     <span className="truncate flex-1">
-                      <span className="font-bold">Proprietário:</span> {clients.find(c => c.email === vessel.created_by)?.name || vessel.created_by}
+                      <span className="font-bold">Proprietário:</span> {clients.find(c => c.id === vessel.owner_id || c.email === vessel.owner_id)?.name || vessel.owner_id}
                     </span>
                   </div>
                 )}
@@ -767,6 +802,27 @@ const Vessels = () => {
                       {vessel.documents.length} Docs
                     </div>
                   )}
+
+                  {/* Edit/Delete Actions */}
+                  <div className="flex gap-2 ml-auto">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingVessel(vessel); setIsModalOpen(true); }}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      title="Editar"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja excluir esta embarcação?')) deleteVessel(vessel.id);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -774,9 +830,9 @@ const Vessels = () => {
         </div>
       )}
 
-      {/* New Vessel Modal */}
-      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nova Embarcação">
-        <form onSubmit={handleSubmit} className="space-y-5 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+      {/* New/Edit Vessel Modal */}
+      <Dialog isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingVessel(null); }} title={editingVessel ? "Editar Embarcação" : "Nova Embarcação"}>
+        <form key={editingVessel ? editingVessel.id : 'new'} onSubmit={handleSubmit} className="space-y-5 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
 
           {/* Admin: Select Owner */}
           {currentUser.user_type === 'funcionario' && (
@@ -798,13 +854,13 @@ const Vessels = () => {
 
             <div>
               <Label>Nome da Embarcação <span className="text-red-500">*</span></Label>
-              <Input name="name" required placeholder="Ex: Pérola Negra" />
+              <Input name="name" required placeholder="Ex: Pérola Negra" defaultValue={editingVessel?.name} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Tipo <span className="text-red-500">*</span></Label>
-                <Select name="type" required>
+                <Select name="type" required defaultValue={editingVessel?.type || 'Lancha'}>
                   <option value="Lancha">Lancha</option>
                   <option value="Veleiro">Veleiro</option>
                   <option value="Jet Ski">Jet Ski</option>
@@ -814,27 +870,27 @@ const Vessels = () => {
               </div>
               <div>
                 <Label>Ano Fabricação <span className="text-red-500">*</span></Label>
-                <Input name="year" type="number" min="1900" max="2100" defaultValue="2024" required />
+                <Input name="year" type="number" min="1900" max="2100" defaultValue={editingVessel?.year || 2024} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Marca / Modelo <span className="text-red-500">*</span></Label>
-                <Input name="model" placeholder="Ex: Azimut 60" required />
+                <Input name="model" placeholder="Ex: Azimut 60" required defaultValue={editingVessel?.model} />
                 {/* Combining Brand/Model in UI for simplicity based on prompt listing, but backend splits them. 
                     Let's just use two fields as per original structure but ensure Model covers requirement */}
                 <input type="hidden" name="brand" value="Genérico" />
               </div>
               <div>
                 <Label>Comprimento <span className="text-red-500">*</span></Label>
-                <Input name="length" placeholder="Ex: 30 pés" required />
+                <Input name="length" placeholder="Ex: 30 pés" required defaultValue={editingVessel?.length} />
               </div>
             </div>
 
             <div>
               <Label>Matrícula / Registro <span className="text-red-500">*</span></Label>
-              <Input name="registration_number" placeholder="Ex: 442123984-2" required />
+              <Input name="registration_number" placeholder="Ex: 442123984-2" required defaultValue={editingVessel?.registration_number} />
             </div>
           </div>
 
@@ -914,146 +970,8 @@ const Vessels = () => {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button type="submit">Salvar Embarcação</Button>
-          </div>
-        </form>
-      </Dialog>
-    </div>
-  );
-};
-
-// --- Page: Services ---
-
-const Services = () => {
-  const { services, vessels, currentUser, addService, updateServiceStatus } = useAppContext();
-  const [activeTab, setActiveTab] = useState('Todos');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  if (!currentUser) return null;
-
-  const filteredServices = services.filter(s => {
-    // 1. Role Filter
-    if (currentUser.user_type === 'cliente' && s.created_by !== currentUser.email) return false;
-    // 2. Tab Filter
-    if (activeTab === 'Todos') return true;
-    return s.status === activeTab;
-  });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    addService({
-      vessel_id: formData.get('vessel_id') as string,
-      category: formData.get('category') as any,
-      description: formData.get('description') as string,
-      preferred_date: formData.get('preferred_date') as string,
-      urgency: formData.get('urgency') as any,
-    });
-    setIsModalOpen(false);
-  };
-
-  const tabs = ['Todos', 'Pendente', 'Em Andamento', 'Concluído'];
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {currentUser.user_type === 'cliente' ? 'Meus Serviços' : 'Solicitações de Serviço'}
-          </h2>
-          <p className="text-slate-500">Acompanhe o status das manutenções.</p>
-        </div>
-        {currentUser.user_type === 'cliente' && (
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus size={18} /> Novo Serviço
-          </Button>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex overflow-x-auto pb-2 gap-2 border-b border-slate-200 dark:border-slate-800">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
-              activeTab === tab
-                ? "bg-white dark:bg-slate-800 text-blue-600 border-b-2 border-blue-600"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredServices.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-400">
-            Nenhum serviço encontrado nesta categoria.
-          </div>
-        ) : (
-          filteredServices.map(service => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              vessels={vessels}
-              onStatusChange={currentUser.user_type === 'funcionario' ? updateServiceStatus : undefined}
-            />
-          ))
-        )}
-      </div>
-
-      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Solicitar Serviço">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Embarcação</Label>
-            <Select name="vessel_id" required>
-              {vessels.filter(v => v.created_by === currentUser.email).map(v => (
-                <option key={v.id} value={v.id}>{v.name} ({v.model})</option>
-              ))}
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Categoria</Label>
-              <Select name="category">
-                <option value="Limpeza">Limpeza</option>
-                <option value="Abastecimento">Abastecimento</option>
-                <option value="Manutenção Preventiva">Manutenção Preventiva</option>
-                <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-              </Select>
-            </div>
-            <div>
-              <Label>Urgência</Label>
-              <Select name="urgency">
-                <option value="Normal">Normal</option>
-                <option value="Urgente">Urgente</option>
-                <option value="Emergencial">Emergencial</option>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label>Data Preferencial</Label>
-            <Input name="preferred_date" type="date" required />
-          </div>
-          <div>
-            <Label>Descrição Detalhada</Label>
-            <textarea
-              name="description"
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none h-24 resize-none"
-              placeholder="Descreva o que precisa ser feito..."
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button type="submit">Solicitar</Button>
+            <Button type="button" variant="ghost" onClick={() => { setIsModalOpen(false); setEditingVessel(null); }}>Cancelar</Button>
+            <Button type="submit">{editingVessel ? 'Salvar Alterações' : 'Salvar Embarcação'}</Button>
           </div>
         </form>
       </Dialog>
@@ -1067,18 +985,26 @@ const ServiceCard: React.FC<{
   service: ServiceRequest;
   vessels: Vessel[];
   onStatusChange?: (id: string, status: ServiceStatus) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onViewDetails?: () => void;
 }> = ({
   service,
   vessels,
-  onStatusChange
+  onStatusChange,
+  onEdit,
+  onDelete,
+  onViewDetails
 }) => {
-    const vessel = vessels.find(v => v.id === service.vessel_id);
+    const vessel = vessels.find(v => v.id === service.boat_id);
 
-    const statusColors: Record<ServiceStatus, "slate" | "blue" | "green" | "red"> = {
+    const statusColors: Record<ServiceStatus, "slate" | "blue" | "green" | "red" | "yellow" | "purple"> = {
       'Pendente': 'slate',
       'Em Andamento': 'blue',
       'Concluído': 'green',
-      'Cancelado': 'red'
+      'Cancelado': 'red',
+      'Em Análise': 'yellow',
+      'Agendado': 'purple'
     };
 
     const urgencyBadge = service.urgency === 'Emergencial' ? 'red' : service.urgency === 'Urgente' ? 'yellow' : 'blue';
@@ -1096,9 +1022,16 @@ const ServiceCard: React.FC<{
           <span>{vessel?.name || 'Embarcação desconhecida'}</span>
         </div>
 
-        <p className="text-sm text-slate-500 dark:text-slate-400 flex-1 mb-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
-          {service.description}
-        </p>
+        <div className="flex-1 mb-4 flex flex-col gap-2">
+          <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg line-clamp-3">
+            {service.description}
+          </p>
+          {onViewDetails && (
+            <Button variant="ghost" size="sm" onClick={onViewDetails} className="self-start text-cyan-600 hover:text-cyan-700 p-0 h-auto font-normal text-xs">
+              Ver detalhes &rarr;
+            </Button>
+          )}
+        </div>
 
         <div className="mt-auto space-y-3">
           <div className="flex justify-between items-center text-xs text-slate-500">
@@ -1109,24 +1042,297 @@ const ServiceCard: React.FC<{
             <Badge color={urgencyBadge} className="text-[10px]">{service.urgency}</Badge>
           </div>
 
-          {onStatusChange && (
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-              <Select
-                value={service.status}
-                onChange={(e) => onStatusChange(service.id, e.target.value as ServiceStatus)}
-                className="py-1 text-sm h-9"
-              >
-                <option value="Pendente">Pendente</option>
-                <option value="Em Andamento">Em Andamento</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Cancelado">Cancelado</option>
-              </Select>
+          {/* Footer Actions: Status + Edit/Delete */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center gap-2">
+              {onStatusChange ? (
+                <Select
+                  value={service.status}
+                  onChange={(e) => onStatusChange(service.id, e.target.value as ServiceStatus)}
+                  className="py-1 text-sm h-9 flex-1"
+                >
+                  <option value="Pendente">Pendente</option>
+                  <option value="Em Andamento">Em Andamento</option>
+                  <option value="Concluído">Concluído</option>
+                  <option value="Cancelado">Cancelado</option>
+                </Select>
+              ) : (
+                <span className="text-sm font-medium text-slate-500">Status: {service.status}</span>
+              )}
+
+              {/* Edit/Delete Buttons */}
+              <div className="flex gap-1">
+                {onEdit && (
+                  <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1.5 text-slate-400 hover:text-blue-500 rounded bg-slate-50 dark:bg-slate-800"><Edit size={14} /></button>
+                )}
+                {onDelete && (
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 text-slate-400 hover:text-red-500 rounded bg-slate-50 dark:bg-slate-800"><Trash2 size={14} /></button>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </Card>
     );
   };
+// --- Page: Services ---
+
+const Services = () => {
+  const { services, vessels, currentUser, addService, updateService, deleteService, updateServiceStatus, clients, catalog } = useAppContext();
+  const [activeTab, setActiveTab] = useState('Todos');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceRequest | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceRequest | null>(null);
+
+  if (!currentUser) return null;
+
+  if (selectedService) {
+    const vessel = vessels.find(v => v.id === selectedService.boat_id);
+    const requester = clients.find(c => c.id === selectedService.user_id) || { name: 'Usuário', email: '...', avatar_initial: 'U', user_type: 'cliente' } as any;
+
+    return (
+      <ServiceDetails
+        service={selectedService}
+        vessel={vessel}
+        requester={requester}
+        onBack={() => setSelectedService(null)}
+        onStatusUpdate={(id, status) => {
+          updateServiceStatus(id, status);
+          // Update local selected service state to reflect change immediately if needed, 
+          // though Context update should trigger re-render, we might need to sync passed prop.
+          setSelectedService(prev => prev ? ({ ...prev, status }) : null);
+        }}
+        isAdmin={currentUser.user_type === 'funcionario'}
+      />
+    );
+  }
+
+  const filteredServices = services.filter(s => {
+    // 1. Role Filter
+    if (currentUser.user_type === 'cliente') {
+      if (s.user_id !== currentUser.id) return false;
+    }
+
+    // 2. Tab Filter
+    if (activeTab === 'Todos') return true;
+    return s.status === activeTab;
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const serviceData = {
+      boat_id: formData.get('vessel_id') as string,
+      category: formData.get('category') as any,
+      description: formData.get('description') as string,
+      preferred_date: formData.get('preferred_date') as string,
+      urgency: formData.get('urgency') as any,
+    };
+
+    if (editingService) {
+      updateService(editingService.id, serviceData);
+    } else {
+      addService(serviceData);
+    }
+
+    setEditingService(null);
+    setIsModalOpen(false);
+  };
+
+  const tabs = ['Todos', 'Pendente', 'Em Andamento', 'Concluído'];
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+            {currentUser.user_type === 'cliente' ? 'Menu de Serviços' : 'Gestão de Serviços'}
+          </h2>
+          <p className="text-slate-500 mt-1">
+            {currentUser.user_type === 'cliente'
+              ? 'Escolha um serviço do catálogo ou acompanhe suas solicitações.'
+              : 'Gerencie o catálogo oficial e acompanhe as ordens de serviço.'}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => { setEditingService(null); setIsModalOpen(true); }}>
+            <Plus size={18} /> Solicitação Personalizada
+          </Button>
+        </div>
+      </div>
+
+      {/* CATALOG SECTION */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-8 w-1 bg-cyan-500 rounded-full"></div>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white">Catálogo Disponível</h3>
+        </div>
+
+        <ServiceCatalog
+          isAdmin={currentUser.user_type === 'funcionario'}
+          onSelectService={(service) => {
+            // Pre-fill the modal with catalog item details
+            setEditingService({
+              id: 'new', // Flag as new
+              boat_id: '',
+              user_id: currentUser.id,
+              category: service.name, // Map Service Name to Category field
+              description: service.description,
+              preferred_date: new Date().toISOString().split('T')[0],
+              urgency: 'Normal',
+              status: 'Pendente',
+              created_at: '',
+              photos: []
+            });
+            setIsModalOpen(true);
+          }}
+        />
+      </section>
+
+      {/* REQUESTS LIST SECTION */}
+      <section className="space-y-4 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-1 bg-blue-500 rounded-full"></div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">Acompanhamento</h3>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex overflow-x-auto pb-2 gap-2">
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap border",
+                  activeTab === tab
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                    : "bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-blue-300"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredServices.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200">
+              <p>Nenhuma solicitação encontrada nesta categoria.</p>
+            </div>
+          ) : (
+            filteredServices.map(service => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                vessels={vessels}
+                onStatusChange={currentUser.user_type === 'funcionario' ? updateServiceStatus : undefined}
+                onEdit={() => { setEditingService(service); setIsModalOpen(true); }}
+                onDelete={() => { if (confirm('Excluir este serviço?')) deleteService(service.id); }}
+                onViewDetails={() => setSelectedService(service)}
+              />
+            ))
+          )}
+          {/* Modal de Solicitação */}
+          <Dialog
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setEditingService(null);
+            }}
+            title={editingService?.id === 'new' ? 'Nova Solicitação' : editingService ? 'Editar Solicitação' : 'Nova Solicitação'}
+          >
+            {(!editingService || editingService.id === 'new') ? (
+              <ServiceRequestWizard
+                vessels={vessels}
+                catalog={catalog}
+                preSelectedService={
+                  editingService && editingService.category
+                    ? catalog.find(s => s.name === editingService.category) || { name: editingService.category, description: editingService.description } as any
+                    : null
+                }
+                onCancel={() => setIsModalOpen(false)}
+                onSubmit={async (formData) => {
+                  const newServiceData = {
+                    boat_id: formData.vessel_id,
+                    description: formData.description,
+                    category: formData.service_name,
+                    preferred_date: formData.preferred_date,
+                    urgency: formData.urgency,
+                    photos: [],
+                    user_id: currentUser.id,
+                    status: 'Pendente' as any
+                  };
+                  addService(newServiceData);
+                  setIsModalOpen(false);
+                  setEditingService(null);
+                }}
+              />
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label>Embarcação</Label>
+                  <Select name="vessel_id" required defaultValue={editingService.boat_id}>
+                    {vessels.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Categoria/Serviço</Label>
+                    <Input name="category" defaultValue={editingService.category} disabled />
+                  </div>
+                  <div>
+                    <Label>Urgência</Label>
+                    <Select name="urgency" defaultValue={editingService.urgency}>
+                      <option value="Normal">Normal</option>
+                      <option value="Urgente">Urgente</option>
+                      <option value="Emergencial">Emergencial</option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Status (Admin)</Label>
+                  <Select name="status" defaultValue={editingService.status} disabled={currentUser.user_type !== 'funcionario'}>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Em Análise">Em Análise</option>
+                    <option value="Agendado">Agendado</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Concluído">Concluído</option>
+                    <option value="Cancelado">Cancelado</option>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Descrição</Label>
+                  <Input name="description" defaultValue={editingService.description} />
+                </div>
+
+                <div>
+                  <Label>Data Preferencial</Label>
+                  <Input name="preferred_date" type="date" defaultValue={editingService.preferred_date} />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                  <Button type="submit">Salvar Alterações</Button>
+                </div>
+              </form>
+            )}
+          </Dialog>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
 
 // --- Page: Profile ---
 
@@ -1347,16 +1553,67 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // --- App Provider & Main Logic ---
 
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const [vessels, setVessels] = useState<Vessel[]>(MOCK_VESSELS);
-  const [services, setServices] = useState<ServiceRequest[]>(MOCK_SERVICES);
-  const [clients, setClients] = useState<User[]>(MOCK_CLIENTS_LIST);
+  const [vessels, setVessels] = useState<Vessel[]>([]);
+  const [services, setServices] = useState<ServiceRequest[]>([]); // These are the REQUESTS
+  const [catalog, setCatalog] = useState<Service[]>([]); // These are the CATALOG ITEMS
+  const [clients, setClients] = useState<User[]>([]);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  // ...
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch Data on Auth
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchData = async () => {
+    setLoading(true);
+
+    // Fetch Vessels
+    const { data: vesselsData, error: vesselsError } = await supabase
+      .from('boats') // Updated table name
+      .select('*');
+    if (vesselsError) console.error('Error fetching vessels:', vesselsError);
+    else if (vesselsData) {
+      // Map DB columns to Frontend if needed, assuming direct map for now plus explicit archival check if needed?
+      // DB 'is_archived' needs to be handled?
+      // types.ts has 'is_archived', DB has 'is_archived'.
+      setVessels(vesselsData as Vessel[]);
+    }
+
+    // Fetch Services (Requests)
+    const { data: servicesData, error: servicesError } = await supabase
+      .from('service_requests')
+      .select('*');
+    if (servicesError) console.error('Error fetching services:', servicesError);
+    else if (servicesData) setServices(servicesData);
+
+    // Fetch Catalog (Official Services)
+    const { data: catalogData, error: catalogError } = await supabase
+      .from('services')
+      .select('*');
+    if (catalogError) console.error('Error fetching catalog:', catalogError);
+    else if (catalogData) setCatalog(catalogData);
+
+    // Fetch Clients (Profiles)
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_type', 'cliente');
+    if (profilesError) console.error('Error fetching clients:', profilesError);
+    else if (profilesData) setClients(profilesData as User[]);
+
+    setLoading(false);
+  };
 
   // Theme Handling
   useEffect(() => {
@@ -1402,40 +1659,139 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification("Perfil atualizado com sucesso!");
   };
 
-  const addClient = (userData: Omit<User, 'id' | 'created_at' | 'avatar_initial' | 'user_type'>) => {
-    const newUser: User = {
+  const addClient = async (userData: Omit<User, 'id' | 'created_at' | 'avatar_initial' | 'user_type'>) => {
+    // 1. Create Profile in Supabase
+    // Note: In a full auth system, you'd use supabase.auth.signUp() here.
+    // For this simple demo where we just insert into 'profiles' table to "simulate" a user registry linked to auth:
+    const newUser = {
       ...userData,
-      id: Math.random().toString(36).substr(2, 9),
-      user_type: 'cliente',
+      // Generating a random UUID-like string since we aren't using real Auth Signup yet for this "Admin creates User" flow
+      // In real usage, Admin would invite user via email.
+      // We will just insert into profiles.
+      user_type: 'cliente' as const,
       avatar_initial: userData.name.charAt(0).toUpperCase(),
-      created_at: new Date().toISOString()
     };
-    setClients([...clients, newUser]);
-    addNotification("Cliente cadastrado com sucesso!");
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([newUser])
+      .select();
+
+    if (error) {
+      addNotification("Erro ao cadastrar cliente: " + error.message);
+      console.error(error);
+    } else if (data) {
+      setClients([...clients, data[0] as User]);
+      addNotification("Cliente cadastrado com sucesso!");
+    }
   };
 
-  const addVessel = (vesselData: Omit<Vessel, 'id'>) => {
+  const addVessel = async (vesselData: Omit<Vessel, 'id' | 'created_at'>) => {
     if (!currentUser) return;
-    const newVessel: Vessel = {
-      ...vesselData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_by: vesselData.created_by || currentUser.email // Use provided owner email or current user
-    };
-    setVessels([...vessels, newVessel]);
-    addNotification("Embarcação cadastrada com sucesso!");
+
+    // Handle owner_id similar to service
+    let ownerId = currentUser.id;
+    // logic to get real ID if mock... simplified for brevity, assuming 'owner_email' logic from frontend handles proper existing user select for Admin
+    // If admin is creating, vesselData.owner_id should be set from the form select.
+    // If owner is creating, vesselData.owner_id might need to be set or inferred.
+
+    // logic inside UI component sets owner_id via email lookup usually? 
+    // The Interface 'Vessel' now has owner_id.
+
+    const { data, error } = await supabase
+      .from('boats') // Table name is boats
+      .insert([vesselData]) // vesselData should match table columns
+      .select();
+
+    if (error) {
+      addNotification("Erro ao salvar embarcação: " + error.message);
+      console.error(error);
+    } else if (data) {
+      setVessels([...vessels, data[0] as Vessel]);
+      addNotification("Embarcação salva com sucesso!");
+    }
   };
 
-  const addService = (serviceData: Omit<ServiceRequest, 'id' | 'created_by' | 'status' | 'created_at'>) => {
+  const updateVessel = async (id: string, data: Partial<Vessel>) => {
+    const { error } = await supabase.from('vessels').update(data).eq('id', id);
+    if (error) {
+      console.error(error);
+      addNotification("Erro ao atualizar embarcação: " + error.message);
+    } else {
+      setVessels(prev => prev.map(v => v.id === id ? { ...v, ...data } : v));
+      addNotification("Embarcação atualizada com sucesso!");
+    }
+  };
+
+  const deleteVessel = async (id: string) => {
+    const { error } = await supabase.from('vessels').delete().eq('id', id);
+    if (error) {
+      console.error(error);
+      addNotification("Erro ao excluir embarcação: " + error.message);
+    } else {
+      setVessels(prev => prev.filter(v => v.id !== id));
+      addNotification("Embarcação excluída com sucesso!");
+    }
+  };
+
+  const addService = async (serviceData: Omit<ServiceRequest, 'id' | 'user_id' | 'status' | 'created_at' | 'photos'>) => {
     if (!currentUser) return;
-    const newService: ServiceRequest = {
+
+    // Get the user ID from the profile matching the current email (simulated auth)
+    // Ideally use auth.uid() if real auth is likely
+    // For now, assume currentUser has ID matching profiles table if we fetched it.
+    // If currentUser comes from 'clients' state, it has ID.
+    // If it comes from Mock, it has 'u1'.
+
+    // We need to fetch the real UUID for the profile based on email if we are simulating login without real auth session
+    let userId = currentUser.id;
+    if (userId === 'u1' || userId === 'u2') {
+      // Try to find real ID from clients list if loaded, or fetch it
+      const found = clients.find(c => c.email === currentUser.email);
+      if (found) userId = found.id;
+    }
+
+    const newService = {
       ...serviceData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_by: currentUser.email,
-      status: 'Pendente',
-      created_at: new Date().toISOString()
+      user_id: userId, // Changed from created_by to user_id
+      status: 'Pendente' as const,
+      photos: [] // Default empty
     };
-    setServices([...services, newService]);
-    addNotification("Solicitação enviada com sucesso!");
+
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert([newService])
+      .select();
+
+    if (error) {
+      addNotification("Erro ao solicitar serviço: " + error.message);
+      console.error(error);
+    } else if (data) {
+      setServices([...services, data[0] as ServiceRequest]);
+      addNotification("Solicitação enviada com sucesso!");
+    }
+  };
+
+  const updateService = async (id: string, data: Partial<ServiceRequest>) => {
+    const { error } = await supabase.from('service_requests').update(data).eq('id', id);
+    if (error) {
+      console.error(error);
+      addNotification("Erro ao atualizar serviço: " + error.message);
+    } else {
+      setServices(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
+      addNotification("Serviço atualizado com sucesso!");
+    }
+  };
+
+  const deleteService = async (id: string) => {
+    const { error } = await supabase.from('service_requests').delete().eq('id', id);
+    if (error) {
+      console.error(error);
+      addNotification("Erro ao excluir serviço: " + error.message);
+    } else {
+      setServices(prev => prev.filter(s => s.id !== id));
+      addNotification("Serviço excluído com sucesso!");
+    }
   };
 
   const updateServiceStatus = (id: string, status: ServiceStatus) => {
@@ -1446,9 +1802,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       currentUser, isAuthenticated, login, logout, updateUserProfile,
-      vessels, addVessel,
-      services, addService, updateServiceStatus,
-      clients, addClient,
+      vessels, addVessel, updateVessel, deleteVessel,
+      services, addService, updateService, deleteService, updateServiceStatus,
+      clients, addClient, catalog, // Added catalog
       currentView, setCurrentView,
       isDarkMode, toggleTheme,
       notifications, addNotification

@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 // --- Card ---
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
+  className?: string;
 }
 
 export const Card = ({ children, className, ...props }: CardProps) => (
@@ -22,9 +23,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   children?: React.ReactNode;
+  className?: string;
+  type?: 'button' | 'submit' | 'reset';
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
 }
 
 export const Button = ({ children, className, variant = 'primary', size = 'md', ...props }: ButtonProps) => {
+  // ... implementation details ...
+  // (We keep the rest same, just ensuring the interface is correct, which it seemed to be. I am effectively re-applying to be sure)
   const variants = {
     primary: "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-md hover:shadow-lg hover:scale-[1.02]",
     secondary: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700",
@@ -53,10 +60,12 @@ export const Button = ({ children, className, variant = 'primary', size = 'md', 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'slate';
+  variant?: string;
+  className?: string;
 }
 
 export const Badge = ({ children, color = 'blue', className, ...props }: BadgeProps) => {
-  const colors = {
+  const colors: Record<string, string> = {
     blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
     yellow: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800",
@@ -66,14 +75,26 @@ export const Badge = ({ children, color = 'blue', className, ...props }: BadgePr
   };
 
   return (
-    <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-semibold border", colors[color], className)} {...props}>
+    <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-semibold border", colors[color] || colors['blue'], className)} {...props}>
       {children}
     </span>
   );
 };
 
 // --- Inputs ---
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> { }
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  className?: string;
+  name?: string;
+  type?: string;
+  placeholder?: string;
+  value?: string | number | readonly string[];
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  required?: boolean;
+  defaultValue?: string | number | readonly string[];
+  disabled?: boolean;
+  min?: string | number;
+  max?: string | number;
+}
 
 export const Input = ({ className, ...props }: InputProps) => (
   <input
@@ -84,6 +105,13 @@ export const Input = ({ className, ...props }: InputProps) => (
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children?: React.ReactNode;
+  className?: string;
+  value?: string | number | readonly string[];
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
+  name?: string;
+  required?: boolean;
+  defaultValue?: string | number | readonly string[];
+  disabled?: boolean;
 }
 
 export const Select = ({ className, children, ...props }: SelectProps) => (
@@ -97,6 +125,7 @@ export const Select = ({ className, children, ...props }: SelectProps) => (
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children?: React.ReactNode;
+  className?: string;
 }
 
 export const Label = ({ children, className, ...props }: LabelProps) => (
