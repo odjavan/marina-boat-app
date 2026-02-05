@@ -87,4 +87,4 @@ export interface Notification {
   created_at: string;
 }
 
-export type ViewState = 'dashboard' | 'vessels' | 'services' | 'clients' | 'profile' | 'settings' | 'help';
+export type ViewState = 'dashboard' | 'vessels' | 'services' | 'history' | 'clients' | 'profile' | 'settings' | 'help';

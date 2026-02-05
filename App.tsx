@@ -15,6 +15,7 @@ import {
 import { supabase } from './lib/supabase';
 import { ServiceRequestWizard } from './components/ServiceRequestWizard';
 import { ServiceDetails } from './components/ServiceDetails';
+import { ServiceHistory } from './components/ServiceHistory';
 
 // --- Contexts ---
 
@@ -189,6 +190,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
     { id: 'dashboard', label: 'Painel da Marina', icon: LayoutDashboard },
     { id: 'clients', label: 'Clientes', icon: Users },
     { id: 'services', label: 'Todas Solicitações', icon: Briefcase },
+    { id: 'history', label: 'Histórico', icon: FileText },
     { id: 'vessels', label: 'Todas Embarcações', icon: Ship },
     { id: 'profile', label: 'Perfil', icon: UserIcon },
     { id: 'settings', label: 'Configurações', icon: Settings },
@@ -1946,12 +1948,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 };
 
 const MainContent = () => {
-  const { currentView } = useAppContext();
+  const { currentView, services, vessels } = useAppContext();
 
   switch (currentView) {
     case 'dashboard': return <Dashboard />;
     case 'vessels': return <Vessels />;
     case 'services': return <Services />;
+    case 'history': return <ServiceHistory services={services} vessels={vessels} />;
     case 'clients': return <Clients />;
     case 'profile': return <Profile />;
     case 'settings': return <SettingsPage />;
@@ -1960,12 +1963,16 @@ const MainContent = () => {
   }
 };
 
+import { ErrorBoundary } from './components/ErrorBoundary';
+
 export default function App() {
   return (
-    <AppProvider>
-      <Layout>
-        <MainContent />
-      </Layout>
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <Layout>
+          <MainContent />
+        </Layout>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
