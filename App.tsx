@@ -20,6 +20,7 @@ import { supabase } from './lib/supabase';
 import { ServiceRequestWizard } from './components/ServiceRequestWizard';
 import { ServiceDetails } from './components/ServiceDetails';
 import { ServiceHistory } from './components/ServiceHistory';
+import { WeatherWidget } from './components/WeatherWidget';
 
 // --- Contextos ---
 
@@ -407,8 +408,11 @@ const Dashboard = () => {
             </div>
           </Card>
         ))}
-      </div>
-
+      </div>
+
+      {/* Weather Widget */}
+      <WeatherWidget />
+
       {/* Lista de Atividades Recentes */}
       <div className="space-y-3">
         <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
