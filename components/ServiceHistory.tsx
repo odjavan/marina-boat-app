@@ -12,6 +12,7 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
     const [filters, setFilters] = useState({
         search: '',
         status: 'all' as ServiceStatus | 'all',
+        paymentStatus: 'all' as 'all' | 'Pendente' | 'Pago' | 'N/A',
         vesselId: 'all',
         startDate: '',
         endDate: ''
@@ -32,6 +33,9 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
             // Vessel
             const matchesVessel = filters.vesselId === 'all' || service.boat_id === filters.vesselId;
 
+            // Payment Status
+            const matchesPayment = filters.paymentStatus === 'all' || service.status_payment === filters.paymentStatus;
+
             // Date Range
             let matchesDate = true;
             if (filters.startDate) {
@@ -43,11 +47,13 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                 matchesDate = matchesDate && new Date(service.created_at) <= end;
             }
 
-            return matchesSearch && matchesStatus && matchesVessel && matchesDate;
+            return matchesSearch && matchesStatus && matchesVessel && matchesDate && matchesPayment;
         }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }, [services, filters]);
 
     const totalCost = filteredServices.reduce((acc, curr) => acc + (curr.total_cost || 0), 0);
+    const totalReceived = filteredServices.filter(s => s.status_payment === 'Pago').reduce((acc, curr) => acc + (curr.total_cost || 0), 0);
+    const totalPending = filteredServices.filter(s => s.status_payment === 'Pendente').reduce((acc, curr) => acc + (curr.total_cost || 0), 0);
 
     const handlePrint = () => {
         window.print();
@@ -60,8 +66,8 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
             {/* Header & Actions - Hidden on Print */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Histórico de Serviços</h1>
-                    <p className="text-slate-500">Relatório detalhado de manutenções e serviços.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Relatórios Gerenciais</h1>
+                    <p className="text-slate-500">Visão financeira e operacional da marina.</p>
                 </div>
                 <button
                     onClick={handlePrint}
@@ -142,21 +148,21 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                     <p className="text-2xl font-bold text-slate-900">{filteredServices.length}</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-slate-200 print:border-slate-300">
-                    <p className="text-xs text-slate-500 uppercase font-semibold">Custo Total</p>
-                    <p className="text-2xl font-bold text-emerald-600">
+                    <p className="text-xs text-slate-500 uppercase font-semibold">Faturamento Total</p>
+                    <p className="text-2xl font-bold text-slate-900">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
                     </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-slate-200 print:border-slate-300">
-                    <p className="text-xs text-slate-500 uppercase font-semibold">Concluídos</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                        {filteredServices.filter(s => s.status === 'Concluído').length}
+                <div className="bg-white p-4 rounded-lg border border-slate-200 print:border-slate-300 border-l-4 border-l-emerald-500">
+                    <p className="text-xs text-slate-500 uppercase font-semibold">Recebido</p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReceived)}
                     </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-slate-200 print:border-slate-300">
-                    <p className="text-xs text-slate-500 uppercase font-semibold">Pendentes</p>
+                <div className="bg-white p-4 rounded-lg border border-slate-200 print:border-slate-300 border-l-4 border-l-amber-500">
+                    <p className="text-xs text-slate-500 uppercase font-semibold">A Receber</p>
                     <p className="text-2xl font-bold text-amber-600">
-                        {filteredServices.filter(s => s.status === 'Pendente' || s.status === 'Em Andamento').length}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPending)}
                     </p>
                 </div>
             </div>
@@ -172,6 +178,7 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                                 <th className="px-4 py-3">Serviço/Categoria</th>
                                 <th className="px-4 py-3">Descrição</th>
                                 <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Pagamento</th>
                                 <th className="px-4 py-3 text-right">Valor</th>
                             </tr>
                         </thead>
@@ -201,6 +208,15 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                                             }
                     `}>
                                             {service.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold
+                                            ${service.status_payment === 'Pago' ? 'bg-emerald-100 text-emerald-800' :
+                                                service.status_payment === 'Pendente' ? 'bg-amber-100 text-amber-800' :
+                                                    'bg-slate-100 text-slate-500'}
+                                         `}>
+                                            {service.status_payment || 'N/A'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right font-medium text-slate-900">

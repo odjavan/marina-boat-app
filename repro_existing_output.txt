@@ -1,0 +1,43 @@
+
+Running 3 tests using 3 workers
+
+[1A[2K[1/3] [chromium] › tests\edit_regressions.spec.ts:14:5 › Edit Functionality Regressions › Should edit an EXISTING Client
+[1A[2K[2/3] [chromium] › tests\edit_regressions.spec.ts:37:5 › Edit Functionality Regressions › Should edit an EXISTING Service
+[1A[2K[3/3] [chromium] › tests\edit_regressions.spec.ts:26:5 › Edit Functionality Regressions › Should edit an EXISTING Vessel
+[1A[2K  1) [chromium] › tests\edit_regressions.spec.ts:37:5 › Edit Functionality Regressions › Should edit an EXISTING Service 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('button', { name: 'Editar' }).first()
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByRole('button', { name: 'Editar' }).first()[22m
+
+
+      39 |
+      40 |         const editBtn = page.getByRole('button', { name: 'Editar' }).first();
+    > 41 |         await expect(editBtn).toBeVisible({ timeout: 10000 });
+         |                               ^
+      42 |         await editBtn.click();
+      43 |
+      44 |         await expect(page.getByText('Editar Solicitação')).toBeVisible();
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\edit_regressions.spec.ts:41:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\edit_regressions-Edit-Func-e5367-ld-edit-an-EXISTING-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\edit_regressions-Edit-Func-e5367-ld-edit-an-EXISTING-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\edit_regressions-Edit-Func-e5367-ld-edit-an-EXISTING-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\edit_regressions.spec.ts:37:5 › Edit Functionality Regressions › Should edit an EXISTING Service 
+  2 passed (18.1s)

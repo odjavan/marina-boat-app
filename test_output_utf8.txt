@@ -1,0 +1,41 @@
+﻿
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] ÔÇ║ tests\service_catalog.spec.ts:26:5 ÔÇ║ Service Catalog Management ÔÇ║ Create, Edit and Delete Service
+[1A[2K  1) [chromium] ÔÇ║ tests\service_catalog.spec.ts:26:5 ÔÇ║ Service Catalog Management ÔÇ║ Create, Edit and Delete Service 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Novo Servi├ºo')
+    Expected: visible
+    Error: strict mode violation: getByText('Novo Servi├ºo') resolved to 2 elements:
+        1) <button class="font-medium rounded-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-md hover:shadow-lg hover:scale-[1.02] px-3 py-1.5 text-sm w-full md:w-auto">ÔÇª</button> aka getByRole('button', { name: 'Novo Servi├ºo' })
+        2) <h2 class="text-xl font-bold mb-4">Novo Servi├ºo</h2> aka getByRole('heading', { name: 'Novo Servi├ºo' })
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Novo Servi├ºo')[22m
+
+
+      31 |         // --- CREATE ---
+      32 |         await page.click('button:has-text("Novo Servi├ºo")');
+    > 33 |         await expect(page.getByText('Novo Servi├ºo')).toBeVisible();
+         |                                                      ^
+      34 |
+      35 |         await page.fill('input[placeholder="Ex: Polimento Completo"]', serviceName);
+      36 |         await page.selectOption('select', { label: 'Limpeza' }); // Assuming 'Limpeza' exists
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\service_catalog.spec.ts:33:54
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\service_catalog-Service-Ca-6c057-ate-Edit-and-Delete-Service-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\service_catalog-Service-Ca-6c057-ate-Edit-and-Delete-Service-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\service_catalog-Service-Ca-6c057-ate-Edit-and-Delete-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] ÔÇ║ tests\service_catalog.spec.ts:26:5 ÔÇ║ Service Catalog Management ÔÇ║ Create, Edit and Delete Service 

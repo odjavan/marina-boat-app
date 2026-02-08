@@ -1,0 +1,44 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Tentando conectar em http://localhost:4000...
+
+[1A[2KConectado em 4000. Título: Marina Boat
+
+[1A[2KTentando clicar no botão de Login...
+
+[1A[2KCreating Client: Autotest Client 1770402448848
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /Salvar/i })[22m
+
+
+      52 |     await page.fill('input[name="cpf"]', '12345678900');
+      53 |
+    > 54 |     await page.getByRole('button', { name: /Salvar/i }).click();
+         |                                                         ^
+      55 |
+      56 |     // Verify Success
+      57 |     await expect(page.getByText('Cliente cadastrado com sucesso')).toBeVisible();
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:54:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

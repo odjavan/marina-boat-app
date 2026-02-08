@@ -1,0 +1,12 @@
+Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: getByText('Audit Client 1770487135489')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for getByText('Audit Client 1770487135489')[22m
+
+    at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\system_audit.spec.ts:44:54

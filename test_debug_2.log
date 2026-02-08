@@ -1,0 +1,34 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Navigating to http://localhost:5173
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/
+    Call log:
+    [2m  - navigating to "http://localhost:5173/", waiting until "load"[22m
+
+
+      13 |     const url = 'http://localhost:5173';
+      14 |     console.log(`Navigating to ${url}`);
+    > 15 |     await page.goto(url);
+         |                ^
+      16 |     console.log('Page Title:', await page.title());
+      17 |
+      18 |     // Debug: Screenshot if visual check needed
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:15:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

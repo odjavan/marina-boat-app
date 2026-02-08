@@ -1,0 +1,50 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Tentando conectar em http://localhost:4000...
+
+[1A[2KConectado em 4000. Título: Marina Boat
+
+[1A[2KTentando clicar no botão de Login...
+
+[1A[2KCreating Client: Autotest Client 1770412247145
+
+[1A[2KCreating Boat: Boat 1770412247145
+
+[1A[2KUploading from: G:\Projeto\APP\Testador de APP\marina-boat-app\tests\test_image.jpg
+
+[1A[2KCreating Service for: Boat 1770412247145
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByText('Boat 1770412247145').first()[22m
+
+
+      121 |     // WIZARD STEP 1: Select Vessel
+      122 |     // Click on the card that contains the boat name
+    > 123 |     await page.getByText(boatName).first().click();
+          |                                            ^
+      124 |     await page.getByRole('button', { name: /Próximo/i }).click();
+      125 |
+      126 |     // WIZARD STEP 2: Service Details
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:123:44
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

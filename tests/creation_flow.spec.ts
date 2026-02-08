@@ -95,18 +95,9 @@ test('Fluxo Completo de Cadastro: Cliente -> Embarcação -> Serviço', async ({
     console.log('✅ Embarcação cadastrada com sucesso');
 
     // 4. Cadastro de Serviço (Catálogo)
-    await page.getByText('Todas Solicitações').click(); // Menu Admin usually "Todas Solicitações", checking sidebar...
-    // Wait, sidebar logic: { id: 'services', label: 'Todas Solicitações', icon: Briefcase } for admin.
-    // But inside Services page: "Menu de Serviços" header.
-    // We need to click "Novo Serviço" inside the ServiceCatalog component if visible.
-    // Catalog is visible in "Services" page.
+    await page.getByText('Todas Solicitações').click();
 
-    await page.getByText('Novo Serviço').click(); // This might be "Solicitação Personalizada" button OR the Catalog "Novo Serviço" button.
-    // Check ServiceCatalog.tsx: text "Novo Serviço" button is only for isAdmin.
-    // Services.tsx also has "Solicitação Personalizada" with "Novo Serviço" text?
-    // ServiceCatalog.tsx: <Button ...>Novo Serviço</Button>
-    // Services.tsx: <Button ...>Novo Serviço</Button> (Wait, line 1287: <Plus size={18} /> Solicitação Personalizada)
-    // So "Novo Serviço" text is unique to Catalog button in desktop view.
+    await page.getByText('Novo Serviço').click();
 
     await page.fill('input[placeholder="Ex: Polimento Completo"]', testData.service.name);
     await page.selectOption('select', { label: testData.service.category }); // Simple select in Catalog

@@ -89,6 +89,11 @@ export const ServiceRequestWizard: React.FC<ServiceRequestWizardProps> = ({
                     <Label>Serviço Selecionado</Label>
                     <div className="font-bold text-lg text-blue-700 dark:text-blue-300">{preSelectedService.name}</div>
                     <p className="text-sm text-blue-600/80 dark:text-blue-400/80">{preSelectedService.description}</p>
+                    {preSelectedService.price && (
+                        <div className="mt-2 font-medium text-blue-800 dark:text-blue-200">
+                            Custo Estimado: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(preSelectedService.price)}
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div>
@@ -100,7 +105,10 @@ export const ServiceRequestWizard: React.FC<ServiceRequestWizardProps> = ({
                     >
                         <option value="">Selecione um serviço...</option>
                         {catalog.map(s => (
-                            <option key={s.id} value={s.name}>{s.name} ({s.estimated_time})</option>
+                            <option key={s.id} value={s.name}>
+                                {s.name} ({s.estimated_time})
+                                {s.price ? ` - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(s.price)}` : ''}
+                            </option>
                         ))}
                         <option value="Outro">Outro / Personalizado</option>
                     </Select>
@@ -163,6 +171,12 @@ export const ServiceRequestWizard: React.FC<ServiceRequestWizardProps> = ({
 
     const Step4Review = () => {
         const vessel = vessels.find(v => v.id === formData.vessel_id);
+        const selectedServiceObj = catalog.find(s => s.name === formData.service_name);
+        // Use preSelectedService if available and matches, or find in catalog
+        const serviceObj = preSelectedService && preSelectedService.name === formData.service_name
+            ? preSelectedService
+            : selectedServiceObj;
+
         return (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -178,6 +192,14 @@ export const ServiceRequestWizard: React.FC<ServiceRequestWizardProps> = ({
                         <span className="text-slate-500">Serviço</span>
                         <span className="font-medium">{formData.service_name || 'Personalizado'}</span>
                     </div>
+                    {serviceObj && serviceObj.price && (
+                        <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <span className="text-slate-500">Valor Estimado</span>
+                            <span className="font-medium text-green-600 dark:text-green-400">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(serviceObj.price)}
+                            </span>
+                        </div>
+                    )}
                     <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
                         <span className="text-slate-500">Data</span>
                         <span className="font-medium">{formData.preferred_date || 'A combinar'}</span>
@@ -221,10 +243,10 @@ export const ServiceRequestWizard: React.FC<ServiceRequestWizardProps> = ({
 
             {/* Step Content */}
             <div className="flex-1 overflow-y-auto px-1 custom-scrollbar">
-                {step === 1 && <Step1Vessel />}
-                {step === 2 && <Step2Service />}
-                {step === 3 && <Step3DateUrgency />}
-                {step === 4 && <Step4Review />}
+                {step === 1 && Step1Vessel()}
+                {step === 2 && Step2Service()}
+                {step === 3 && Step3DateUrgency()}
+                {step === 4 && Step4Review()}
             </div>
 
             {/* Footer Actions */}

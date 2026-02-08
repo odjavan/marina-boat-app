@@ -1,0 +1,52 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Tentando conectar em http://localhost:4000...
+
+[1A[2KConectado em 4000. Título: Marina Boat
+
+[1A[2KTentando clicar no botão de Login...
+
+[1A[2KCreating Client: Autotest Client 1770402569746
+
+[1A[2KCreating Boat: Boat 1770402569746
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Nova Embarcação', { exact: true })
+    Expected: visible
+    Error: strict mode violation: getByText('Nova Embarcação', { exact: true }) resolved to 2 elements:
+        1) <button class="font-medium rounded-md transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-md hover:shadow-lg hover:scale-[1.02] px-3 py-1.5 text-sm">…</button> aka getByRole('button', { name: 'Nova Embarcação' })
+        2) <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Nova Embarcação</h3> aka getByRole('heading', { name: 'Nova Embarcação' })
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Nova Embarcação', { exact: true })[22m
+
+
+      65 |     // Select Owner (Admin specific field)
+      66 |     // Wait for modal
+    > 67 |     await expect(page.getByText('Nova Embarcação', { exact: true })).toBeVisible();
+         |                                                                      ^
+      68 |
+      69 |     // Select user if dropdown exists (Admin flow)
+      70 |     const ownerSelect = page.locator('select[name="owner_email"]');
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:67:70
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

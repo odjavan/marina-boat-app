@@ -3,8 +3,9 @@ import { User, Vessel, ServiceRequest } from './types';
 
 // ... variables
 
+// UUIDs estáticos para evitar churn e erros de "invalid syntax for type uuid"
 export const CURRENT_USER_CLIENT: User = {
-  id: 'u1',
+  id: '00000000-0000-0000-0000-000000000001', // UUID Válido
   name: 'João Silva',
   email: 'joao.silva@email.com',
   phone: '(11) 99876-5432',
@@ -14,7 +15,7 @@ export const CURRENT_USER_CLIENT: User = {
 };
 
 export const CURRENT_USER_EMPLOYEE: User = {
-  id: 'e1',
+  id: '00000000-0000-0000-0000-000000000002', // UUID Válido
   name: 'Maria Marina',
   email: 'maria.staff@marinaboat.com',
   phone: '(21) 98888-7777',
@@ -26,7 +27,7 @@ export const CURRENT_USER_EMPLOYEE: User = {
 export const MOCK_CLIENTS_LIST: User[] = [
   CURRENT_USER_CLIENT,
   {
-    id: 'u2',
+    id: '00000000-0000-0000-0000-000000000003', // UUID Válido
     name: 'Ana Souza',
     email: 'ana.souza@email.com',
     phone: '(11) 98765-4321',
@@ -39,8 +40,8 @@ export const MOCK_CLIENTS_LIST: User[] = [
 
 export const MOCK_VESSELS: Vessel[] = [
   {
-    id: 'v1',
-    created_by: 'joao.silva@email.com',
+    id: '00000000-0000-0000-0000-000000000010', // UUID Válido
+    owner_id: '00000000-0000-0000-0000-000000000001', // João
     name: 'Lancha Azul',
     type: 'Lancha',
     brand: 'Phantom',
@@ -49,11 +50,12 @@ export const MOCK_VESSELS: Vessel[] = [
     length: '30 pés',
     registration_number: '442123984-2',
     photos: [],
-    documents: []
+    documents: [],
+    is_archived: false
   },
   {
-    id: 'v2',
-    created_by: 'joao.silva@email.com',
+    id: '00000000-0000-0000-0000-000000000011', // UUID Válido
+    owner_id: '00000000-0000-0000-0000-000000000001', // João
     name: 'Veleiro Vento',
     type: 'Veleiro',
     brand: 'Bavaria',
@@ -62,11 +64,12 @@ export const MOCK_VESSELS: Vessel[] = [
     length: '46 pés',
     registration_number: '553214098-1',
     photos: [],
-    documents: []
+    documents: [],
+    is_archived: false
   },
   {
-    id: 'v3',
-    created_by: 'joao.silva@email.com',
+    id: '00000000-0000-0000-0000-000000000012', // UUID Válido
+    owner_id: '00000000-0000-0000-0000-000000000001', // João
     name: 'Iate Luxo',
     type: 'Iate',
     brand: 'Ferretti',
@@ -75,42 +78,46 @@ export const MOCK_VESSELS: Vessel[] = [
     length: '72 pés',
     registration_number: '998877665-0',
     photos: [],
-    documents: []
+    documents: [],
+    is_archived: false
   }
 ];
 
 export const MOCK_SERVICES: ServiceRequest[] = [
   {
-    id: 's1',
-    created_by: 'joao.silva@email.com',
-    vessel_id: 'v1',
+    id: '00000000-0000-0000-0000-000000000100', // UUID Válido
+    user_id: '00000000-0000-0000-0000-000000000001', // João
+    boat_id: '00000000-0000-0000-0000-000000000010', // Lancha Azul
     category: 'Limpeza',
     description: 'Limpeza completa do casco e convés.',
     preferred_date: '2023-10-25',
     urgency: 'Normal',
     status: 'Pendente',
-    created_at: '2023-10-20'
+    created_at: '2023-10-20',
+    photos: []
   },
   {
-    id: 's2',
-    created_by: 'joao.silva@email.com',
-    vessel_id: 'v2',
+    id: '00000000-0000-0000-0000-000000000101', // UUID Válido
+    user_id: '00000000-0000-0000-0000-000000000001', // João
+    boat_id: '00000000-0000-0000-0000-000000000011', // Veleiro Vento
     category: 'Manutenção Preventiva',
     description: 'Revisão do motor e troca de óleo.',
     preferred_date: '2023-10-28',
     urgency: 'Urgente',
     status: 'Em Andamento',
-    created_at: '2023-10-21'
+    created_at: '2023-10-21',
+    photos: []
   },
   {
-    id: 's3',
-    created_by: 'joao.silva@email.com',
-    vessel_id: 'v3',
+    id: '00000000-0000-0000-0000-000000000102', // UUID Válido
+    user_id: '00000000-0000-0000-0000-000000000001', // João
+    boat_id: '00000000-0000-0000-0000-000000000012', // Iate Luxo
     category: 'Abastecimento',
     description: 'Abastecimento completo de Diesel.',
     preferred_date: '2023-10-15',
     urgency: 'Normal',
     status: 'Concluído',
-    created_at: '2023-10-10'
+    created_at: '2023-10-10',
+    photos: []
   }
 ];

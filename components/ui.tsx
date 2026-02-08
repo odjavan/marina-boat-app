@@ -12,7 +12,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export const Card = ({ children, className, ...props }: CardProps) => (
+export const Card: React.FC<CardProps> = ({ children, className, ...props }) => (
   <div className={cn("bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300", className)} {...props}>
     {children}
   </div>
@@ -27,6 +27,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   type?: 'button' | 'submit' | 'reset';
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
+  [key: string]: any; // Allow other props like key, etc.
 }
 
 export const Button = ({ children, className, variant = 'primary', size = 'md', ...props }: ButtonProps) => {
@@ -94,6 +95,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   disabled?: boolean;
   min?: string | number;
   max?: string | number;
+  step?: string | number;
 }
 
 export const Input = ({ className, ...props }: InputProps) => (

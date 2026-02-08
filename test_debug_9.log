@@ -1,0 +1,41 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Tentando conectar em http://localhost:4000...
+
+[1A[2KConectado em 4000. Título: Marina Boat
+
+[1A[2KTentando clicar no botão de Login...
+
+[1A[2KCreating Client: Autotest Client 1770407785055
+
+[1A[2KCreating Boat: Boat 1770407785055
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    ReferenceError: __dirname is not defined
+
+      87 |     // Upload Photo (Critical Schema Check 'photos')
+      88 |     const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    > 89 |     await fileInput.setInputFiles(path.join(__dirname, 'test_image.jpg'));
+         |                                             ^
+      90 |
+      91 |     // Scoped to modal or use stricter text
+      92 |     await page.getByRole('button', { name: /Salvar/i }).click();
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:89:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

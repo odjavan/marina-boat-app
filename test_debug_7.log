@@ -1,0 +1,45 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+[1A[2K[chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service
+Tentando conectar em http://localhost:4000...
+
+[1A[2KConectado em 4000. Título: Marina Boat
+
+[1A[2KTentando clicar no botão de Login...
+
+[1A[2KCreating Client: Autotest Client 1770403318314
+
+[1A[2KCreating Boat: Boat 1770403318314
+
+[1A[2KCould not select owner, maybe simplified list?
+
+[1A[2K  1) [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.fill: Target page, context or browser has been closed
+
+      79 |     }
+      80 |
+    > 81 |     await page.fill('input[name="name"]', boatName);
+         |                ^
+      82 |     await page.selectOption('select[name="type"]', 'Lancha'); // Critical Schema Check ('type')
+      83 |     await page.fill('input[name="year"]', '2024');
+      84 |     await page.fill('input[name="model"]', 'Test Model');
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\full_flow.spec.ts:81:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full_flow-Full-System-Flow-15789-reate-Boat---Create-Service-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\full_flow.spec.ts:4:1 › Full System Flow: Login -> Create Client -> Create Boat -> Create Service 

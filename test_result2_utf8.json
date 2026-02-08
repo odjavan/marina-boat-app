@@ -1,0 +1,136 @@
+﻿{
+    "config":  {
+                   "configFile":  "G:\\Projeto\\APP\\Testador de APP\\marina-boat-app\\playwright.config.ts",
+                   "rootDir":  "G:/Projeto/APP/Testador de APP/marina-boat-app/tests",
+                   "forbidOnly":  false,
+                   "fullyParallel":  true,
+                   "globalSetup":  null,
+                   "globalTeardown":  null,
+                   "globalTimeout":  0,
+                   "grep":  {
+
+                            },
+                   "grepInvert":  null,
+                   "maxFailures":  0,
+                   "metadata":  {
+                                    "actualWorkers":  1
+                                },
+                   "preserveOutput":  "always",
+                   "projects":  [
+                                    {
+                                        "outputDir":  "G:/Projeto/APP/Testador de APP/marina-boat-app/test-results",
+                                        "repeatEach":  1,
+                                        "retries":  0,
+                                        "metadata":  {
+                                                         "actualWorkers":  1
+                                                     },
+                                        "id":  "chromium",
+                                        "name":  "chromium",
+                                        "testDir":  "G:/Projeto/APP/Testador de APP/marina-boat-app/tests",
+                                        "testIgnore":  [
+
+                                                       ],
+                                        "testMatch":  [
+                                                          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+                                                      ],
+                                        "timeout":  30000
+                                    }
+                                ],
+                   "quiet":  false,
+                   "reporter":  [
+                                    [
+                                        "json"
+                                    ]
+                                ],
+                   "reportSlowTests":  {
+                                           "max":  5,
+                                           "threshold":  300000
+                                       },
+                   "runAgents":  "none",
+                   "shard":  null,
+                   "tags":  [
+
+                            ],
+                   "updateSnapshots":  "missing",
+                   "updateSourceMethod":  "patch",
+                   "version":  "1.58.1",
+                   "workers":  4,
+                   "webServer":  {
+                                     "command":  "npm run dev",
+                                     "url":  "http://localhost:3000",
+                                     "reuseExistingServer":  true
+                                 }
+               },
+    "suites":  [
+                   {
+                       "title":  "dashboard_agents.spec.ts",
+                       "file":  "dashboard_agents.spec.ts",
+                       "column":  0,
+                       "line":  0,
+                       "specs":  [
+
+                                 ],
+                       "suites":  [
+                                      {
+                                          "title":  "Dashboard, Agents and Settings",
+                                          "file":  "dashboard_agents.spec.ts",
+                                          "line":  4,
+                                          "column":  6,
+                                          "specs":  [
+                                                        {
+                                                            "title":  "Dashboard stats and Agent management",
+                                                            "ok":  false,
+                                                            "tags":  [
+
+                                                                     ],
+                                                            "tests":  [
+                                                                          {
+                                                                              "timeout":  60000,
+                                                                              "annotations":  [
+
+                                                                                              ],
+                                                                              "expectedStatus":  "passed",
+                                                                              "projectId":  "chromium",
+                                                                              "projectName":  "chromium",
+                                                                              "results":  [
+                                                                                              {
+                                                                                                  "workerIndex":  0,
+                                                                                                  "parallelIndex":  0,
+                                                                                                  "status":  "failed",
+                                                                                                  "duration":  18311,
+                                                                                                  "error":  "@{message=Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator(\u0027h2\u0027)\nExpected substring: \u001b[32m\"Vis├úo Geral da Marina\"\u001b[39m\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator(\u0027h2\u0027)\u001b[22m\n; stack=Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator(\u0027h2\u0027)\nExpected substring: \u001b[32m\"Vis├úo Geral da Marina\"\u001b[39m\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator(\u0027h2\u0027)\u001b[22m\n\n    at G:\\Projeto\\APP\\Testador de APP\\marina-boat-app\\tests\\dashboard_agents.spec.ts:19:42; location=; snippet=\u001b[0m \u001b[90m 17 |\u001b[39m         \u001b[90m// 2. Dashboard Stats\u001b[39m\n \u001b[90m 18 |\u001b[39m         \u001b[90m// Wait for dashboard header\u001b[39m\n\u001b[31m\u001b[1m\u003e\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m\u0027h2\u0027\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m\u0027Vis├úo Geral da Marina\u0027\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m         \u001b[90m// Check Client count\u001b[39m\n \u001b[90m 22 |\u001b[39m         \u001b[90m// Just check that we have \"Clientes\" and \"19\" on the page near each other?\u001b[39m\u001b[0m}",
+                                                                                                  "errors":  "",
+                                                                                                  "stdout":  "",
+                                                                                                  "stderr":  "",
+                                                                                                  "retry":  0,
+                                                                                                  "startTime":  "2026-02-07T21:23:23.877Z",
+                                                                                                  "annotations":  "",
+                                                                                                  "attachments":  "  ",
+                                                                                                  "errorLocation":  "@{file=G:\\Projeto\\APP\\Testador de APP\\marina-boat-app\\tests\\dashboard_agents.spec.ts; column=42; line=19}"
+                                                                                              }
+                                                                                          ],
+                                                                              "status":  "unexpected"
+                                                                          }
+                                                                      ],
+                                                            "id":  "b9ea873166bce5f6e88b-898d77dd987c3fcadf9c",
+                                                            "file":  "dashboard_agents.spec.ts",
+                                                            "line":  11,
+                                                            "column":  5
+                                                        }
+                                                    ]
+                                      }
+                                  ]
+                   }
+               ],
+    "errors":  [
+
+               ],
+    "stats":  {
+                  "startTime":  "2026-02-07T21:23:21.924Z",
+                  "duration":  20767.43,
+                  "expected":  0,
+                  "skipped":  0,
+                  "unexpected":  1,
+                  "flaky":  0
+              }
+}

@@ -1,0 +1,32 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\admin_clients_crud.spec.ts:4:1 › Admin can Create, Edit and Delete Clients
+
+[1A[2K  1) [chromium] › tests\admin_clients_crud.spec.ts:4:1 › Admin can Create, Edit and Delete Clients ─
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4000/
+    Call log:
+    [2m  - navigating to "http://localhost:4000/", waiting until "load"[22m
+
+
+       5 |     try {
+       6 |         // 1. Login as Admin
+    >  7 |         await page.goto('http://localhost:4000/');
+         |                    ^
+       8 |
+       9 |         // Ensure clean state (logout if needed)
+      10 |         await page.evaluate(() => localStorage.clear());
+        at G:\Projeto\APP\Testador de APP\marina-boat-app\tests\admin_clients_crud.spec.ts:7:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\admin_clients_crud-Admin-can-Create-Edit-and-Delete-Clients-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\admin_clients_crud-Admin-can-Create-Edit-and-Delete-Clients-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    [chromium] › tests\admin_clients_crud.spec.ts:4:1 › Admin can Create, Edit and Delete Clients ──

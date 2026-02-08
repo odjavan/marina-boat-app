@@ -29,7 +29,8 @@ export interface Vessel {
   created_at?: string;
 }
 
-export type ServiceCategoryName = 'Limpeza' | 'Abastecimento' | 'Manutenção Preventiva' | 'Manutenção Corretiva' | 'Outros Serviços';
+export type ServiceCategoryName = string;
+
 
 export interface ServiceCategory {
   id: string;
@@ -45,6 +46,7 @@ export interface Service {
   description: string;
   estimated_time: string;
   icon: string;
+  price?: number; // New field for cost/price
   is_active: boolean;
 }
 
@@ -64,6 +66,7 @@ export interface ServiceRequest {
   photos: string[];
   admin_notes?: string;
   total_cost?: number;
+  status_payment?: 'Pendente' | 'Pago' | 'N/A';
   created_at: string;
 }
 

@@ -1,0 +1,5 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\edit_regressions.spec.ts:14:5 › Edit Functionality Regressions › Should create and then edit a Client
+[1A[2K  1 passed (8.2s)
