@@ -3,7 +3,8 @@ import {
   Anchor, Wind, Droplets, User as UserIcon, LogOut, Settings,
   HelpCircle, Home, Ship, Briefcase, Plus, Search,
   CheckCircle2, Clock, AlertTriangle, Moon, Sun, Menu, LayoutDashboard,
-  Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2, Badge as BadgeIcon
+  Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2, Badge as BadgeIcon,
+  TrendingUp, Activity as ActivityLucide
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
 import { DataTable, type Column } from './components/DataTable';
@@ -184,6 +185,29 @@ const LoginScreen = () => {
 
 // --- Componentes ---
 
+// --- Componente: Tooltip ---
+const Tooltip = ({ children, content }: { children: React.ReactNode; content: string }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 dark:bg-slate-700 text-white text-sm rounded-lg whitespace-nowrap z-50 shadow-xl">
+          {content}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900 dark:border-r-slate-700" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Componente: Sidebar ---
+
 const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolean) => void }) => {
   const { currentUser, currentView, setCurrentView, isDarkMode, toggleTheme, logout } = useAppContext();
 
@@ -203,9 +227,6 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
     { id: 'services', label: 'Todas Solicitações', icon: Briefcase },
     { id: 'history', label: 'Histórico', icon: FileText },
     { id: 'vessels', label: 'Todas Embarcações', icon: Ship },
-    { id: 'profile', label: 'Perfil', icon: UserIcon },
-    { id: 'settings', label: 'Configurações', icon: Settings },
-    { id: 'help', label: 'Ajuda', icon: HelpCircle },
   ];
 
   return (
@@ -216,111 +237,82 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
         onClick={() => setIsOpen(false)}
       />
 
-      {/* Barra Lateral */}
+      {/* Barra Lateral Minimalista */}
       <aside className={cn(
-        "fixed md:static inset-y-0 left-0 z-30 w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:translate-x-0 flex flex-col h-full",
+        "fixed md:static inset-y-0 left-0 z-30 w-16 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:translate-x-0 flex flex-col items-center py-4",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        {/* Cabeçalho */}
-        {/* Header */}
-        <div className="p-3 flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-800">
-          <div className="p-1.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg shadow-lg">
-            <Anchor className="text-white h-5 w-5" />
+        {/* Avatar do Usuário no Topo */}
+        <Tooltip content={currentUser.name.split(' ')[0]}>
+          <div className="mb-6 relative group cursor-pointer">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white dark:ring-slate-900 transition-transform group-hover:scale-110">
+              {currentUser.avatar_initial}
+            </div>
+            <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
           </div>
-          <div>
-            <h1 className="font-bold text-lg bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              Marina Boat
-            </h1>
-            <p className="text-[10px] text-slate-500 font-medium">
-              {currentUser.user_type === 'funcionario' ? '🔧 Painel Admin' : '⚓ Área do Cliente'}
-            </p>
-          </div>
-        </div>
+        </Tooltip>
 
-        {/* Widget de Clima */}
-        {/* Weather Widget */}
-        <div className="mx-2.5 mt-3 p-2 rounded-lg bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900/30 border border-blue-100 dark:border-slate-700">
-          <h3 className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Status da Marina</h3>
-          <div className="grid grid-cols-3 gap-1.5">
-            <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/60 dark:bg-slate-800/60 shadow-sm">
-              <div className="p-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 mb-0.5">
-                <Sun size={12} />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">28°C</span>
-            </div>
-            <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/60 dark:bg-slate-800/60 shadow-sm">
-              <div className="p-1 rounded-full bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 mb-0.5">
-                <Wind size={12} />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">12 nós</span>
-            </div>
-            <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/60 dark:bg-slate-800/60 shadow-sm">
-              <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mb-0.5">
-                <Droplets size={12} />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">0.8m</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Navegação */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {/* Navegação Principal */}
+        <nav className="flex-1 flex flex-col items-center gap-1 w-full px-2">
           {menuItems.map((item) => {
             const isActive = currentView === item.id;
             const Icon = item.icon;
             return (
-              <button
-                key={item.id}
-                data-testid={item.id}
-                onClick={() => {
-                  setCurrentView(item.id as ViewState);
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-800 dark:to-slate-800 text-blue-600 dark:text-blue-400 shadow-sm translate-x-1"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
-                )}
-              >
-                <Icon size={18} className={isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400"} />
-                {item.label}
-              </button>
+              <div key={item.id}>
+                <Tooltip content={item.label}>
+                  <button
+                    data-testid={item.id}
+                    onClick={() => {
+                      setCurrentView(item.id as ViewState);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
+                      isActive
+                        ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 shadow-sm"
+                        : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-600 dark:hover:text-slate-300"
+                    )}
+                  >
+                    {/* Indicador de Ativo */}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-600 dark:bg-cyan-400 rounded-r-full" />
+                    )}
+                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  </button>
+                </Tooltip>
+              </div>
             );
           })}
         </nav>
 
-        {/* Rodapé */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-3 px-2">
-            <span className="text-[10px] font-medium text-slate-500">Modo Escuro</span>
+        {/* Footer Actions */}
+        <div className="flex flex-col items-center gap-1 w-full px-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <Tooltip content="Configurações">
+            <button
+              onClick={() => setCurrentView('settings')}
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
+            >
+              <Settings size={20} />
+            </button>
+          </Tooltip>
+
+          <Tooltip content={isDarkMode ? "Modo Claro" : "Modo Escuro"}>
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
             >
-              {isDarkMode ? <Moon size={16} /> : <Sun size={16} />}
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-          </div>
+          </Tooltip>
 
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-2.5 flex items-center gap-2.5 border border-slate-100 dark:border-slate-700/50">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-md text-sm">
-              {currentUser.avatar_initial}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                {currentUser.name.split(' ')[0]}
-              </p>
-              <p className="text-[10px] text-slate-500 truncate capitalize">{currentUser.user_type}</p>
-            </div>
+          <Tooltip content="Sair">
             <button
               onClick={logout}
-              title="Sair"
-              aria-label="Sair"
-              className="text-slate-400 hover:text-red-500 transition-colors"
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all"
             >
-              <LogOut size={16} />
+              <LogOut size={20} />
             </button>
-          </div>
+          </Tooltip>
         </div>
       </aside>
     </>
@@ -350,48 +342,69 @@ const Dashboard = () => {
 
   // Estatísticas do Cliente
   const clientStats = [
-    { label: 'Embarcações', value: myVessels.length, icon: Ship, color: 'text-blue-600 bg-blue-100' },
-    { label: 'Serviços Ativos', value: activeServices.length, icon: ActivityIcon, color: 'text-cyan-600 bg-cyan-100' },
-    { label: 'Concluídos', value: completedServices.length, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-100' },
-    { label: 'Total', value: myServices.length, icon: Briefcase, color: 'text-purple-600 bg-purple-100' },
+    { label: 'Embarcações', value: myVessels.length, icon: Ship, color: 'text-blue-600', bgColor: 'bg-blue-50', trend: '+2' },
+    { label: 'Serviços Ativos', value: activeServices.length, icon: ActivityLucide, color: 'text-cyan-600', bgColor: 'bg-cyan-50', trend: '+5' },
+    { label: 'Concluídos', value: completedServices.length, icon: CheckCircle2, color: 'text-emerald-600', bgColor: 'bg-emerald-50', trend: '+12%' },
+    { label: 'Total', value: myServices.length, icon: Briefcase, color: 'text-purple-600', bgColor: 'bg-purple-50', trend: '+8' },
   ];
 
   // Estatísticas do Admin
   const adminStats = [
-    { label: 'Pendentes', value: pendingServices.length, icon: AlertTriangle, color: 'text-amber-600 bg-amber-100' },
-    { label: 'Em Andamento', value: inProgressServices.length, icon: ActivityIcon, color: 'text-blue-600 bg-blue-100' },
-    { label: 'Concluídos', value: completedServices.length, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-100' },
-    { label: 'Embarcações', value: vessels.length, icon: Ship, color: 'text-cyan-600 bg-cyan-100' },
-    { label: 'Clientes', value: clients.length, icon: UserIcon, color: 'text-slate-600 bg-slate-100' },
+    { label: 'Pendentes', value: pendingServices.length, icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50', trend: '-3' },
+    { label: 'Em Andamento', value: inProgressServices.length, icon: ActivityLucide, color: 'text-blue-600', bgColor: 'bg-blue-50', trend: '+2' },
+    { label: 'Concluídos', value: completedServices.length, icon: CheckCircle2, color: 'text-emerald-600', bgColor: 'bg-emerald-50', trend: '+15%' },
+    { label: 'Embarcações', value: vessels.length, icon: Ship, color: 'text-cyan-600', bgColor: 'bg-cyan-50', trend: '+4' },
+    { label: 'Clientes', value: clients.length, icon: UserIcon, color: 'text-slate-600', bgColor: 'bg-slate-50', trend: '+7' },
   ];
 
   const statsToShow = currentUser.user_type === 'cliente' ? clientStats : adminStats;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header Moderno */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {currentUser.user_type === 'funcionario' ? 'Visão Geral da Marina' : `Olá, ${currentUser.name.split(' ')[0]}! 👋`}
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">Aqui está o resumo da sua marina hoje.</p>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+            {currentUser.user_type === 'funcionario' ? 'Painel da Marina' : `Olá, ${currentUser.name.split(' ')[0]}! 👋`}
+          </h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400">
+            {currentUser.user_type === 'funcionario'
+              ? 'Gerencie os usuários e serviços da marina.'
+              : 'Acompanhe seus serviços e embarcações.'}
+          </p>
         </div>
         {currentUser.user_type === 'cliente' && (
-          <Button onClick={() => setCurrentView('services')}>
-            <Plus size={18} /> Novo Serviço
+          <Button
+            onClick={() => setCurrentView('services')}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 transition-all hover:scale-105"
+          >
+            <Plus size={20} className="mr-2" />
+            Novo Serviço
           </Button>
         )}
       </div>
 
-      {/* Grade de Estatísticas */}
-      <div className={cn("grid gap-3", currentUser.user_type === 'cliente' ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-5")}>
+      {/* Grade de Estatísticas Modernas */}
+      <div className={cn("grid gap-4", currentUser.user_type === 'cliente' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5")}>
         {statsToShow.map((stat, idx) => (
-          <Card key={idx} className="p-3 flex flex-col items-center justify-center text-center hover:-translate-y-1">
-            <div className={cn("p-2 rounded-full mb-2", stat.color.replace('text-', 'bg-').replace('bg-', 'bg-opacity-20 '))} >
-              <stat.icon className={cn("h-5 w-5", stat.color.split(' ')[0])} />
+          <Card key={idx} className="p-6 hover:shadow-lg transition-all duration-200 border-0 shadow-md hover:-translate-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                  {stat.label}
+                </p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <TrendingUp size={14} />
+                  {stat.trend} este mês
+                </p>
+              </div>
+              <div className={cn("p-4 rounded-2xl", stat.bgColor)}>
+                <stat.icon className={cn("h-8 w-8", stat.color)} />
+              </div>
             </div>
-            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stat.value}</span>
-            <span className="text-xs text-slate-500 font-medium">{stat.label}</span>
           </Card>
         ))}
       </div>
