@@ -26,5 +26,18 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "bkp",
+    ".tmp",
+    ".git",
+    ".aios-core",
+    "playwright-report",
+    "test-results"
+  ]
 }

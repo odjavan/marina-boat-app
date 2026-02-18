@@ -1,0 +1,18 @@
+Conforme solicitado, o código-fonte do MVP do App Marina Boat foi compactado e está sendo entregue no arquivo anexo.
+
+📦 Código-Fonte do App Marina Boat
+Arquivo Anexo: marina-boat-app.zip
+
+Este arquivo contém todo o código do Front-end (React/Vite/Tailwind CSS) que desenvolvi no Sandbox, incluindo a estrutura PWA, a navegação e as seções didáticas "Como Funciona".
+
+💡 Próximos Passos para Implantação Permanente
+
+Para que o App funcione de forma permanente em um domínio próprio, você precisará:
+Hospedagem: Fazer o upload do conteúdo deste ZIP para um serviço de hospedagem de Front-end (ex: Vercel, Netlify, AWS Amplify).
+
+Build: Executar o comando de build (npm run build) no ambiente de hospedagem para gerar os arquivos estáticos (dist/).
+
+Domínio: Conectar seu domínio (ex: app.webboat.com.br) ao serviço de hospedagem.
+Lembre-se: Este é o MVP do Front-end. Para que as funcionalidades em stand by (Login, Pagamento, Notificações, etc.) funcionem de verdade, o Back-end e as Integrações de API precisarão ser desenvolvidos em uma próxima fase.
+
+Se precisar de ajuda para criar um Briefing Técnico para contratar um desenvolvedor para as próximas fases, ou se tiver qualquer outra dúvida, estou à disposição.
