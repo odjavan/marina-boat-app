@@ -3,22 +3,28 @@ import { Sun, Wind, Droplets, CloudRain, Cloud } from 'lucide-react';
 import { Card } from './ui';
 import { fetchWeather, WeatherData } from '../lib/weather';
 
-export const WeatherWidget: React.FC = () => {
+interface WeatherWidgetProps {
+    lat?: string;
+    lon?: string;
+    marinaName?: string;
+}
+
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lon, marinaName }) => {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getWeatherData = async () => {
-            const data = await fetchWeather();
+            setLoading(true);
+            const data = await fetchWeather(lat, lon);
             setWeather(data);
             setLoading(false);
         };
         getWeatherData();
 
-        // Atualizar a cada 30 minutos
         const interval = setInterval(getWeatherData, 30 * 60 * 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [lat, lon]);
 
     const getWeatherIcon = (desc: string) => {
         const d = desc.toLowerCase();

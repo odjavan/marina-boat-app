@@ -11,6 +11,20 @@ import { DataTable, type Column } from './components/DataTable';
 import { DebugEnv } from './components/DebugEnv';
 import { ServiceCatalog } from './components/ServiceCatalog';
 import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service, Marina, Quotation, UserType } from './types';
+
+export interface LocationData {
+  name: string;
+  lat: string;
+  lon: string;
+}
+
+const PRESET_LOCATIONS: LocationData[] = [
+  { name: 'Rio de Janeiro', lat: '-23.0039', lon: '-43.3231' },
+  { name: 'Represa Guarapiranga', lat: '-23.6823', lon: '-46.7324' },
+  { name: 'Santos', lat: '-23.9608', lon: '-46.3336' },
+  { name: 'Guarujá', lat: '-23.9935', lon: '-46.2571' },
+  { name: 'Angra dos Reis', lat: '-23.0067', lon: '-44.3181' },
+];
 import {
   CURRENT_USER_CLIENT, CURRENT_USER_EMPLOYEE, CURRENT_USER_MARINA_OWNER
 } from './constants';
@@ -70,6 +84,8 @@ interface AppContextType {
   quotations: Quotation[];
   addQuotation: (data: Omit<Quotation, 'id' | 'created_at'>) => Promise<void>;
   updateQuotationStatus: (id: string, status: 'Aprovado' | 'Recusado') => Promise<void>;
+  marinaLocation: LocationData;
+  setMarinaLocation: (location: LocationData) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -357,7 +373,10 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
 // --- Página: Dashboard ---
 
 const Dashboard = () => {
-  const { currentUser, vessels, services, clients, agents, setCurrentView, currentMarina } = useAppContext();
+  const {
+    currentUser, vessels, services, clients, agents,
+    setCurrentView, currentMarina, marinaLocation, setMarinaLocation
+  } = useAppContext();
 
   if (!currentUser) return null;
 
@@ -410,15 +429,32 @@ const Dashboard = () => {
               : `${currentMarina?.city ? currentMarina.city + ' - ' : ''}${currentUser.user_type === 'marina' ? 'Gerencie sua marina e serviços.' : 'Gerencie usuários e serviços.'}`}
           </p>
         </div>
-        {currentUser.user_type === 'cliente' && (
-          <Button
-            onClick={() => setCurrentView('services')}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 transition-all hover:scale-105"
-          >
-            <Plus size={20} className="mr-2" />
-            Novo Serviço
-          </Button>
-        )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 px-2 uppercase tracking-tighter">Região</div>
+            <select
+              className="bg-transparent border-0 text-sm font-semibold text-slate-700 dark:text-slate-200 focus:ring-0 cursor-pointer py-1 px-3"
+              value={marinaLocation.name}
+              onChange={(e) => {
+                const loc = PRESET_LOCATIONS.find(l => l.name === e.target.value);
+                if (loc) setMarinaLocation(loc);
+              }}
+            >
+              {PRESET_LOCATIONS.map(loc => (
+                <option key={loc.name} value={loc.name} className="bg-white dark:bg-slate-900">{loc.name}</option>
+              ))}
+            </select>
+          </div>
+          {currentUser.user_type === 'cliente' && (
+            <Button
+              onClick={() => setCurrentView('services')}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 transition-all hover:scale-105"
+            >
+              <Plus size={20} className="mr-2" />
+              Novo Serviço
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Grade de Estatísticas Modernas */}
@@ -452,7 +488,11 @@ const Dashboard = () => {
       <ProactiveAlerts />
 
       {/* Weather Widget */}
-      <WeatherWidget />
+      <WeatherWidget
+        lat={marinaLocation.lat}
+        lon={marinaLocation.lon}
+        marinaName={marinaLocation.name}
+      />
 
       {/* Mapa de Píer Interativo (Apenas Marina/Admin) */}
       {(currentUser.user_type === 'marina' || currentUser.user_type === 'admin') && (
@@ -2289,6 +2329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [vessels, setVessels] = useState<Vessel[]>([]);
+  const [marinaLocation, setMarinaLocation] = useState<LocationData>(PRESET_LOCATIONS[0]);
   const [services, setServices] = useState<ServiceRequest[]>([]); // Estas são as SOLICITAÇÕES
   const [catalog, setCatalog] = useState<Service[]>([]); // Estes são os ITENS DO CATÁLOGO
   const [clients, setClients] = useState<User[]>([]);
@@ -3056,7 +3097,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateNotificationSettings,
       quotations,
       addQuotation,
-      updateQuotationStatus
+      updateQuotationStatus,
+      marinaLocation,
+      setMarinaLocation
     }}>
       {children}
     </AppContext.Provider>
