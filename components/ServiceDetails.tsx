@@ -1,7 +1,8 @@
 import React from 'react';
 import { ServiceRequest, ServiceStatus, Vessel, User } from '../types';
-import { Card, Button, Badge } from './ui';
-import { Clock, CheckCircle2, AlertTriangle, XCircle, ChevronLeft, Calendar, Ship, User as UserIcon } from 'lucide-react';
+import { useAppContext } from '../App';
+import { Card, Button, Badge, Label, Select, Input, cn } from './ui';
+import { Clock, CheckCircle2, AlertTriangle, XCircle, ChevronLeft, Calendar, Ship, User as UserIcon, Briefcase, FileText, DollarSign } from 'lucide-react';
 
 interface ServiceDetailsProps {
     service: ServiceRequest;
@@ -12,7 +13,7 @@ interface ServiceDetailsProps {
     isAdmin: boolean;
 }
 
-const statusSteps: ServiceStatus[] = ['Pendente', 'Em Análise', 'Agendado', 'Em Andamento', 'Concluído'];
+const statusSteps: ServiceStatus[] = ['Pendente', 'Em Análise', 'Aguardando Orçamento', 'Agendado', 'Em Andamento', 'Concluído'];
 
 export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     service,
@@ -22,8 +23,17 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     onStatusUpdate,
     isAdmin
 }) => {
+    const { agents, updateService, quotations, addQuotation, updateQuotationStatus, currentUser, currentMarina } = useAppContext();
+    const [quoteForm, setQuoteForm] = React.useState({ amount: 0, days: 1, description: '' });
+    const [showQuoteForm, setShowQuoteForm] = React.useState(false);
     const currentStepIndex = statusSteps.indexOf(service.status);
     const isCancelled = service.status === 'Cancelado';
+
+    const handleAssignAgent = (agentId: string) => {
+        updateService(service.id, { assigned_to: agentId });
+    };
+
+    const assignedAgent = agents.find(a => a.id === service.assigned_to);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -132,6 +142,53 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 </div>
                             </div>
 
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Responsável Técnico</label>
+                                    {isAdmin && !service.assigned_to && (
+                                        <Badge color="blue" className="text-[10px] animate-pulse">IA: Sugestão Disponível</Badge>
+                                    )}
+                                </div>
+                                {isAdmin ? (
+                                    <div className="space-y-2">
+                                        <Select
+                                            value={service.assigned_to || ''}
+                                            onChange={(e) => handleAssignAgent(e.target.value)}
+                                            className={cn(!service.assigned_to && "border-cyan-200 dark:border-cyan-900 shadow-sm shadow-cyan-500/10")}
+                                        >
+                                            <option value="">Selecione um responsável...</option>
+                                            {agents.map(agent => {
+                                                // Lógica Simples de Sugestão
+                                                const isSuggested =
+                                                    (service.category.toLowerCase().includes('limp') && agent.name.toLowerCase().includes('carlos')) ||
+                                                    (service.category.toLowerCase().includes('mecan') && agent.name.toLowerCase().includes('marcelo')) ||
+                                                    (service.category.toLowerCase().includes('elet') && agent.name.toLowerCase().includes('henrique'));
+
+                                                return (
+                                                    <option key={agent.id} value={agent.id}>
+                                                        {agent.name} {isSuggested ? '⭐ (Recomendado para esta categoria)' : ''}
+                                                    </option>
+                                                );
+                                            })}
+                                        </Select>
+                                        {isAdmin && !service.assigned_to && (
+                                            <p className="text-[10px] text-cyan-600 dark:text-cyan-400 font-medium italic">
+                                                * Nossa IA sugere o profissional com maior expertise em <strong>{service.category}</strong>.
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                        <Briefcase size={18} className="text-slate-400" />
+                                        {assignedAgent ? (
+                                            <span className="font-medium">{assignedAgent.name}</span>
+                                        ) : (
+                                            <span className="text-slate-400 italic">Não atribuído</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Admin Actions */}
                             {isAdmin && !isCancelled && service.status !== 'Concluído' && onStatusUpdate && (
                                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
@@ -140,8 +197,11 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                         {service.status === 'Pendente' && (
                                             <Button size="sm" onClick={() => onStatusUpdate(service.id, 'Em Análise')}>Aceitar / Analisar</Button>
                                         )}
+                                        {service.status === 'Em Análise' && !showQuoteForm && (
+                                            <Button size="sm" variant="primary" onClick={() => setShowQuoteForm(true)}>Enviar Orçamento</Button>
+                                        )}
                                         {(service.status === 'Pendente' || service.status === 'Em Análise') && (
-                                            <Button size="sm" variant="outline" onClick={() => onStatusUpdate(service.id, 'Agendado')}>Agendar</Button>
+                                            <Button size="sm" variant="outline" onClick={() => onStatusUpdate(service.id, 'Agendado')}>Agendar Direto</Button>
                                         )}
                                         {service.status === 'Agendado' && (
                                             <Button size="sm" onClick={() => onStatusUpdate(service.id, 'Em Andamento')}>Iniciar Serviço</Button>
@@ -152,6 +212,71 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                         <Button size="sm" variant="danger" onClick={() => onStatusUpdate(service.id, 'Cancelado')}>Cancelar</Button>
                                     </div>
                                 </div>
+                            )}
+
+                            {/* Quotation Flow - Marina Side */}
+                            {isAdmin && showQuoteForm && (
+                                <Card className="p-4 bg-slate-50 dark:bg-slate-800/50 border-cyan-200 dark:border-cyan-900 animate-in zoom-in-95 duration-200 mt-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="font-bold text-cyan-700 dark:text-cyan-400 flex items-center gap-2">
+                                            <DollarSign size={18} /> Novo Orçamento
+                                        </h4>
+                                        <button onClick={() => setShowQuoteForm(false)} className="text-slate-400 hover:text-slate-600">
+                                            <XCircle size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Valor do Serviço (R$)</Label>
+                                                <div className="relative">
+                                                    <DollarSign size={16} className="absolute left-3 top-2.5 text-slate-400" />
+                                                    <Input
+                                                        type="number"
+                                                        className="pl-9"
+                                                        value={quoteForm.amount}
+                                                        onChange={(e) => setQuoteForm({ ...quoteForm, amount: parseFloat(e.target.value) })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <Label>Prazo (Dias)</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={quoteForm.days}
+                                                    onChange={(e) => setQuoteForm({ ...quoteForm, days: parseInt(e.target.value) })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label>Notas do Orçamento</Label>
+                                            <textarea
+                                                className="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-cyan-500 outline-none resize-none"
+                                                placeholder="Inclua o que está coberto no valor..."
+                                                value={quoteForm.description}
+                                                onChange={(e) => setQuoteForm({ ...quoteForm, description: e.target.value })}
+                                            />
+                                        </div>
+                                        <Button
+                                            className="w-full"
+                                            onClick={async () => {
+                                                if (currentMarina) {
+                                                    await addQuotation({
+                                                        service_request_id: service.id,
+                                                        marina_id: currentMarina.id,
+                                                        amount: quoteForm.amount,
+                                                        description: quoteForm.description,
+                                                        estimated_days: quoteForm.days,
+                                                        status: 'Aguardando'
+                                                    });
+                                                    setShowQuoteForm(false);
+                                                }
+                                            }}
+                                        >
+                                            Enviar Orçamento para o Cliente
+                                        </Button>
+                                    </div>
+                                </Card>
                             )}
                         </div>
                     </Card>
@@ -200,8 +325,52 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             </div>
                             <div className="mt-3 text-xs flex items-center gap-2 text-slate-500">
                                 <UserIcon size={12} />
-                                <span>{requester.user_type === 'funcionario' ? 'Administrador' : 'Cliente'}</span>
+                                <span>{requester.user_type === 'admin' ? 'Administrador' : requester.user_type === 'marina' ? 'Dono da Marina' : 'Dono de Embarcação'}</span>
                             </div>
+                        </Card>
+                    )}
+
+                    {/* Quotation Info - Client Side */}
+                    {!isAdmin && service.status === 'Aguardando Orçamento' && (
+                        <Card className="p-5 border-2 border-cyan-500 ring-4 ring-cyan-500/10 animate-pulse-subtle">
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <DollarSign className="text-cyan-500" /> Orçamento Recebido!
+                            </h3>
+                            {quotations.filter(q => q.service_request_id === service.id && q.status === 'Aguardando').map(quote => (
+                                <div key={quote.id} className="space-y-4">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
+                                        <div className="flex justify-between items-end mb-2">
+                                            <span className="text-xs text-slate-500">Valor Total:</span>
+                                            <span className="text-xl font-black text-cyan-600 dark:text-cyan-400">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quote.amount)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Prazo Estimado:</span>
+                                            <span className="font-bold">{quote.estimated_days} dias</span>
+                                        </div>
+                                    </div>
+                                    {quote.description && (
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 italic">"{quote.description}"</p>
+                                    )}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button
+                                            variant="primary"
+                                            className="w-full bg-cyan-600 hover:bg-cyan-700"
+                                            onClick={() => updateQuotationStatus(quote.id, 'Aprovado')}
+                                        >
+                                            Aprovar
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                                            onClick={() => updateQuotationStatus(quote.id, 'Recusado')}
+                                        >
+                                            Recusar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
                         </Card>
                     )}
 

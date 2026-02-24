@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ServiceRequest, Vessel, ServiceStatus } from '../types';
+import { useAppContext } from '../App';
 import { Search, Filter, Printer, Calendar, Ship, CheckCircle2 } from 'lucide-react';
 import { Card } from './ui';
 
@@ -9,6 +10,7 @@ interface ServiceHistoryProps {
 }
 
 export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
+    const { agents } = useAppContext();
     const [filters, setFilters] = useState({
         search: '',
         status: 'all' as ServiceStatus | 'all',
@@ -177,6 +179,7 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                                 <th className="px-4 py-3">Embarcação</th>
                                 <th className="px-4 py-3">Serviço/Categoria</th>
                                 <th className="px-4 py-3">Descrição</th>
+                                <th className="px-4 py-3 hidden md:table-cell">Responsável</th>
                                 <th className="px-4 py-3">Status</th>
                                 <th className="px-4 py-3">Pagamento</th>
                                 <th className="px-4 py-3 text-right">Valor</th>
@@ -198,6 +201,20 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
                                     </td>
                                     <td className="px-4 py-3 text-slate-600 max-w-xs truncate print:whitespace-normal">
                                         {service.description}
+                                    </td>
+                                    <td className="px-4 py-3 hidden md:table-cell">
+                                        {service.assigned_to ? (
+                                            <div className="flex items-center gap-1.5" title={agents.find(a => a.id === service.assigned_to)?.name}>
+                                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                                                    {agents.find(a => a.id === service.assigned_to)?.avatar_initial}
+                                                </div>
+                                                <span className="text-slate-600 text-sm truncate max-w-[100px]">
+                                                    {agents.find(a => a.id === service.assigned_to)?.name.split(' ')[0]}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-400 italic text-xs">--</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border
@@ -230,7 +247,7 @@ export function ServiceHistory({ services, vessels }: ServiceHistoryProps) {
 
                             {filteredServices.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                                         Nenhum serviço encontrado com os filtros atuais.
                                     </td>
                                 </tr>

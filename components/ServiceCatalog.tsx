@@ -14,11 +14,11 @@ interface ServiceCatalogProps {
 }
 
 export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({ onSelectService, isAdmin = true }) => {
+    const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
     const [services, setServices] = useState<Service[]>([]);
     const [categories, setCategories] = useState<ServiceCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
     const { addNotification, updateCatalogState } = useAppContext();
 
     // New Service Form State

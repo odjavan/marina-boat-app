@@ -37,7 +37,7 @@ export const VesselCard: React.FC<VesselCardProps> = ({ vessel, ownerName, onEdi
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="font-medium text-slate-500">Registro:</span>
-                                <span className="font-mono text-xs">{vessel.registration}</span>
+                                <span className="font-mono text-xs">{vessel.registration_number}</span>
                             </div>
                             {ownerName && (
                                 <div className="flex items-center gap-2">

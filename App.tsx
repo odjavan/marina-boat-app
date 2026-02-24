@@ -4,15 +4,15 @@ import {
   HelpCircle, Home, Ship, Briefcase, Plus, Search,
   CheckCircle2, Clock, AlertTriangle, Moon, Sun, Menu, LayoutDashboard,
   Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2, Badge as BadgeIcon,
-  TrendingUp, Activity as ActivityLucide
+  TrendingUp, Activity as ActivityLucide, Building2, DollarSign, ClipboardList
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
 import { DataTable, type Column } from './components/DataTable';
 import { DebugEnv } from './components/DebugEnv';
 import { ServiceCatalog } from './components/ServiceCatalog';
-import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service } from './types';
+import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service, Marina, Quotation, UserType } from './types';
 import {
-  CURRENT_USER_CLIENT, CURRENT_USER_EMPLOYEE
+  CURRENT_USER_CLIENT, CURRENT_USER_EMPLOYEE, CURRENT_USER_MARINA_OWNER
 } from './constants';
 // Adaptação para suportar tanto addService quanto addRequest se houver confusão de nomes anteriores
 // ...
@@ -21,15 +21,17 @@ import { ServiceRequestWizard } from './components/ServiceRequestWizard';
 import { ServiceDetails } from './components/ServiceDetails';
 import { ServiceHistory } from './components/ServiceHistory';
 import { WeatherWidget } from './components/WeatherWidget';
+import { ProactiveAlerts } from './components/ProactiveAlerts';
 import { ClientCard } from './components/ClientCard';
 import { VesselCard } from './components/VesselCard';
+import { DockMap } from './components/DockMap';
 
 // --- Contextos ---
 
 interface AppContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
-  login: (type: 'admin' | 'user' | 'manual', email?: string, password?: string) => void;
+  login: (type: UserType | 'manual', email?: string, password?: string) => void;
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => void;
   vessels: Vessel[];
@@ -44,7 +46,7 @@ interface AppContextType {
   catalog: Service[]; // Lógica adicionada
   updateCatalogState: (newCatalog: Service[]) => void;
 
-  addService: (service: Omit<ServiceRequest, 'id' | 'created_by' | 'status' | 'created_at'>) => void;
+  addService: (service: Omit<ServiceRequest, 'id' | 'user_id' | 'status' | 'created_at' | 'photos'>) => void;
   updateService: (id: string, data: Partial<ServiceRequest>) => void;
   deleteService: (id: string) => void;
   updateServiceStatus: (id: string, status: ServiceStatus) => void;
@@ -58,11 +60,16 @@ interface AppContextType {
   setCurrentView: (view: ViewState) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  currentMarina: Marina | null;
+  updateMarina: (data: Partial<Marina>) => void;
   notifications: string[];
   addNotification: (msg: string) => void;
-
   notificationSettings: { email: boolean; push: boolean; sms: boolean };
   updateNotificationSettings: (settings: { email: boolean; push: boolean; sms: boolean }) => void;
+
+  quotations: Quotation[];
+  addQuotation: (data: Omit<Quotation, 'id' | 'created_at'>) => Promise<void>;
+  updateQuotationStatus: (id: string, status: 'Aprovado' | 'Recusado') => Promise<void>;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -82,7 +89,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
 
   // Demonstração apenas
-  const handleDemoLogin = (type: 'admin' | 'user') => {
+  const handleDemoLogin = (type: UserType) => {
     login(type);
   };
 
@@ -155,23 +162,32 @@ const LoginScreen = () => {
             <p className="text-xs text-center text-slate-500 mb-4 font-medium uppercase tracking-wider">
               Área de Testes
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => handleDemoLogin('admin')}
                 className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
               >
-                <div className="font-bold text-sm text-slate-800 dark:text-slate-200">Administrador</div>
-                <div className="text-[10px] text-slate-500 font-mono mt-1 group-hover:text-cyan-600">
-                  alexandre.djavan@gmail.com<br />admin123
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Admin</div>
+                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-cyan-600">
+                  admin@<br />admin123
                 </div>
               </button>
               <button
-                onClick={() => handleDemoLogin('user')}
+                onClick={() => handleDemoLogin('marina')}
                 className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
               >
-                <div className="font-bold text-sm text-slate-800 dark:text-slate-200">Usuário/Cliente</div>
-                <div className="text-[10px] text-slate-500 font-mono mt-1 group-hover:text-blue-600">
-                  cliente@marina.com<br />user123
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Marina</div>
+                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-emerald-600">
+                  marina@<br />marina123
+                </div>
+              </button>
+              <button
+                onClick={() => handleDemoLogin('cliente')}
+                className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
+              >
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Embarcação</div>
+                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-blue-600">
+                  cliente@<br />user123
                 </div>
               </button>
             </div>
@@ -212,25 +228,41 @@ const Tooltip = ({ children, content }: { children: React.ReactNode; content: st
 // --- Componente: Sidebar ---
 
 const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolean) => void }) => {
-  const { currentUser, currentView, setCurrentView, isDarkMode, toggleTheme, logout } = useAppContext();
+  const { currentUser, currentView, setCurrentView, isDarkMode, toggleTheme, logout, currentMarina } = useAppContext();
 
   if (!currentUser) return null;
 
-  const menuItems = currentUser.user_type === 'cliente' ? [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'vessels', label: 'Embarcações', icon: Ship },
-    { id: 'services', label: 'Serviços', icon: Briefcase },
-    { id: 'profile', label: 'Perfil', icon: UserIcon },
-    { id: 'settings', label: 'Configurações', icon: Settings },
-    { id: 'help', label: 'Ajuda', icon: HelpCircle },
-  ] : [
-    { id: 'dashboard', label: 'Painel da Marina', icon: LayoutDashboard },
-    { id: 'clients', label: 'Clientes', icon: Users },
-    { id: 'agents', label: 'Equipe', icon: BadgeIcon },
-    { id: 'services', label: 'Todas Solicitações', icon: Briefcase },
-    { id: 'history', label: 'Histórico', icon: FileText },
-    { id: 'vessels', label: 'Todas Embarcações', icon: Ship },
-  ];
+  const menuItemsByType: Record<string, { id: string; label: string; icon: any }[]> = {
+    admin: [
+      { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
+      { id: 'clients', label: 'Clientes', icon: Users },
+      { id: 'marinas', label: 'Marinas', icon: Building2 },
+      { id: 'agents', label: 'Equipe', icon: BadgeIcon },
+      { id: 'services', label: 'Todas Solicitações', icon: Briefcase },
+      { id: 'history', label: 'Histórico', icon: FileText },
+      { id: 'vessels', label: 'Todas Embarcações', icon: Ship },
+    ],
+    marina: [
+      { id: 'dashboard', label: 'Painel da Marina', icon: LayoutDashboard },
+      { id: 'services', label: 'Fila de Serviços', icon: ClipboardList },
+      { id: 'vessels', label: 'Embarcações na Marina', icon: Ship },
+      { id: 'quotations', label: 'Orçamentos', icon: DollarSign },
+      { id: 'agents', label: 'Equipe', icon: BadgeIcon },
+      { id: 'history', label: 'Histórico', icon: FileText },
+      { id: 'profile', label: 'Perfil', icon: UserIcon },
+    ],
+    cliente: [
+      { id: 'dashboard', label: 'Dashboard', icon: Home },
+      { id: 'vessels', label: 'Minhas Embarcações', icon: Ship },
+      { id: 'services', label: 'Meus Serviços', icon: Briefcase },
+      { id: 'quotations', label: 'Orçamentos', icon: DollarSign },
+      { id: 'profile', label: 'Perfil', icon: UserIcon },
+      { id: 'settings', label: 'Configurações', icon: Settings },
+      { id: 'help', label: 'Ajuda', icon: HelpCircle },
+    ],
+  };
+
+  const menuItems = menuItemsByType[currentUser.user_type] || menuItemsByType.cliente;
 
   return (
     <>
@@ -325,17 +357,17 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
 // --- Página: Dashboard ---
 
 const Dashboard = () => {
-  const { currentUser, vessels, services, clients, agents, setCurrentView } = useAppContext();
+  const { currentUser, vessels, services, clients, agents, setCurrentView, currentMarina } = useAppContext();
 
   if (!currentUser) return null;
 
   // Lógica de Filtro
   const myVessels = currentUser.user_type === 'cliente'
-    ? vessels.filter(v => v.created_by === currentUser.email)
+    ? vessels.filter(v => v.owner_id === currentUser.id)
     : vessels;
 
   const myServices = currentUser.user_type === 'cliente'
-    ? services.filter(s => s.created_by === currentUser.email)
+    ? services.filter(s => s.user_id === currentUser.id)
     : services;
 
   const pendingServices = myServices.filter(s => s.status === 'Pendente');
@@ -368,12 +400,14 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            {currentUser.user_type === 'funcionario' ? 'Painel da Marina' : `Olá, ${currentUser.name.split(' ')[0]}! 👋`}
+            {currentUser.user_type === 'cliente'
+              ? `Olá, ${currentUser.name.split(' ')[0]}! 👋`
+              : (currentMarina?.name || (currentUser.user_type === 'marina' ? `Marina ${currentUser.name}` : 'Painel Administrativo'))}
           </h1>
           <p className="text-lg text-slate-500 dark:text-slate-400">
-            {currentUser.user_type === 'funcionario'
-              ? 'Gerencie os usuários e serviços da marina.'
-              : 'Acompanhe seus serviços e embarcações.'}
+            {currentUser.user_type === 'cliente'
+              ? 'Acompanhe seus serviços e embarcações.'
+              : `${currentMarina?.city ? currentMarina.city + ' - ' : ''}${currentUser.user_type === 'marina' ? 'Gerencie sua marina e serviços.' : 'Gerencie usuários e serviços.'}`}
           </p>
         </div>
         {currentUser.user_type === 'cliente' && (
@@ -414,9 +448,18 @@ const Dashboard = () => {
 
 
 
-      {/* Weather Widget */}
+      {/* Alertas Proativos */}
+      <ProactiveAlerts />
 
+      {/* Weather Widget */}
       <WeatherWidget />
+
+      {/* Mapa de Píer Interativo (Apenas Marina/Admin) */}
+      {(currentUser.user_type === 'marina' || currentUser.user_type === 'admin') && (
+        <div className="animate-in slide-in-from-bottom duration-700 delay-200">
+          <DockMap />
+        </div>
+      )}
 
 
 
@@ -711,7 +754,7 @@ const Vessels = () => {
   // Verificar usos de visibleVessels... Foi usado na mensagem "Sem resultados".
   // Podemos apenas usar filteredVessels.length lá ou uma verificação separada "hasAnyVessels" se necessário.
   // Na verdade, para manter a lógica "Adicione sua primeira embarcação" correta, podemos precisar saber se eles têm ALGUM barco.
-  const userHasBoats = vessels.some(v => currentUser.user_type === 'funcionario' || v.owner_id === currentUser.id);
+  const userHasBoats = vessels.some(v => currentUser.user_type === 'admin' || v.owner_id === currentUser.id);
 
   // --- Lógica do Formulário ---
 
@@ -761,7 +804,8 @@ const Vessels = () => {
       registration_number: formData.get('registration_number') as string,
       photos: photoPreviews,
       documents: docs.map(d => d.name),
-      owner_id: ownerEmail || (editingVessel ? editingVessel.owner_id : currentUser.id)
+      owner_id: ownerEmail || (editingVessel ? editingVessel.owner_id : currentUser.id),
+      is_archived: editingVessel ? editingVessel.is_archived : false
     };
 
     if (editingVessel) {
@@ -808,7 +852,7 @@ const Vessels = () => {
     }
   ];
 
-  if (currentUser.user_type === 'funcionario') {
+  if (currentUser.user_type === 'admin') {
     vesselColumns.push({
       header: 'Proprietário',
       cell: (v) => {
@@ -910,7 +954,7 @@ const Vessels = () => {
           )}
         </Card>
       ) : (
-        currentUser.user_type === 'funcionario' ? (
+        currentUser.user_type === 'admin' ? (
           <DataTable
             data={filteredVessels}
             columns={vesselColumns}
@@ -963,7 +1007,7 @@ const Vessels = () => {
                   </div>
 
                   {/* Owner Badge (Admin Only) */}
-                  {currentUser.user_type === 'funcionario' && (
+                  {currentUser.user_type === 'admin' && (
                     <div className="text-xs text-slate-500 mt-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded border border-slate-200 dark:border-slate-800/50">
                       <UserIcon size={12} className="text-slate-400" />
                       <span className="truncate flex-1">
@@ -1014,7 +1058,7 @@ const Vessels = () => {
         <form key={editingVessel ? editingVessel.id : 'new'} onSubmit={handleSubmit} className="space-y-5 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
 
           {/* Admin: Selecionar Proprietário */}
-          {currentUser.user_type === 'funcionario' && (
+          {currentUser.user_type === 'admin' && (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900 mb-4">
               <Label>Proprietário da Embarcação <span className="text-red-500">*</span></Label>
               <Select name="owner_email" required defaultValue="">
@@ -1217,7 +1261,9 @@ const ServiceCard: React.FC<{
       'Concluído': 'green',
       'Cancelado': 'red',
       'Em Análise': 'yellow',
-      'Agendado': 'purple'
+      'Agendado': 'purple',
+      'Aguardando Orçamento': 'yellow',
+      'Orçamento Recusado': 'red'
     };
 
     const urgencyBadge = service.urgency === 'Emergencial' ? 'red' : service.urgency === 'Urgente' ? 'yellow' : 'blue';
@@ -1316,14 +1362,15 @@ const Services = () => {
           // embora a atualização do Contexto deva acionar o re-render, podemos precisar sincronizar a prop passada.
           setSelectedService(prev => prev ? ({ ...prev, status }) : null);
         }}
-        isAdmin={currentUser.user_type === 'funcionario'}
+        isAdmin={currentUser.user_type === 'admin' || currentUser.user_type === 'marina'}
       />
     );
   }
 
   const statusColors: Record<ServiceStatus, any> = {
     'Pendente': 'slate', 'Em Andamento': 'blue', 'Concluído': 'green',
-    'Cancelado': 'red', 'Em Análise': 'yellow', 'Agendado': 'purple'
+    'Cancelado': 'red', 'Em Análise': 'yellow', 'Agendado': 'purple',
+    'Aguardando Orçamento': 'yellow', 'Orçamento Recusado': 'red'
   };
 
   const adminColumns: Column<ServiceRequest>[] = [
@@ -1441,7 +1488,7 @@ const Services = () => {
         </div>
 
         <ServiceCatalog
-          isAdmin={currentUser.user_type === 'funcionario'}
+          isAdmin={currentUser.user_type === 'admin'}
           onSelectService={(service) => {
             // Preencher o modal com detalhes do item do catálogo
             setEditingService({
@@ -1488,13 +1535,13 @@ const Services = () => {
           </div>
         </div>
 
-        <div className={cn(currentUser.user_type === 'funcionario' ? "" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3")}>
+        <div className={cn(currentUser.user_type === 'admin' ? "" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3")}>
           {filteredServices.length === 0 ? (
             <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200">
               <p>Nenhuma solicitação encontrada nesta categoria.</p>
             </div>
           ) : (
-            currentUser.user_type === 'funcionario' ? (
+            currentUser.user_type === 'admin' ? (
               <DataTable
                 data={filteredServices}
                 columns={adminColumns}
@@ -1507,7 +1554,7 @@ const Services = () => {
                   key={service.id}
                   service={service}
                   vessels={vessels}
-                  onStatusChange={currentUser.user_type === 'funcionario' ? updateServiceStatus : undefined}
+                  onStatusChange={(currentUser.user_type === 'admin' || currentUser.user_type === 'marina') ? updateServiceStatus : undefined}
                   onEdit={() => { setEditingService(service); setIsModalOpen(true); }}
                   onDelete={() => setServiceToDelete(service)}
                   onViewDetails={() => setSelectedService(service)}
@@ -1656,7 +1703,7 @@ const Services = () => {
                     name="status"
                     value={editingService.status}
                     onChange={(e) => setEditingService({ ...editingService, status: e.target.value as any })}
-                    disabled={currentUser.user_type !== 'funcionario'}
+                    disabled={currentUser.user_type !== 'admin'}
                   >
                     <option value="Pendente">Pendente</option>
                     <option value="Em Análise">Em Análise</option>
@@ -1667,7 +1714,7 @@ const Services = () => {
                   </Select>
                 </div>
 
-                {currentUser.user_type === 'funcionario' && (
+                {currentUser.user_type === 'admin' && (
                   <>
                     <div>
                       <Label>Valor (R$)</Label>
@@ -1765,8 +1812,8 @@ const Profile = () => {
           <div className="text-center md:text-left">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{currentUser.name}</h3>
             <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-1 text-sm">
-              <Badge color={currentUser.user_type === 'funcionario' ? 'purple' : 'blue'}>
-                {currentUser.user_type === 'funcionario' ? 'Administrador' : 'Cliente'}
+              <Badge color={currentUser.user_type === 'admin' ? 'purple' : 'blue'}>
+                {currentUser.user_type === 'admin' ? 'Administrador' : 'Cliente'}
               </Badge>
               <span className="text-slate-400 flex items-center gap-1 justify-center md:justify-start">
                 <Clock size={12} /> Membro desde {new Date(currentUser.created_at).getFullYear()}
@@ -2167,7 +2214,7 @@ const SettingsPage = () => {
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { notifications, isAuthenticated } = useAppContext();
+  const { notifications, isAuthenticated, currentMarina, currentUser } = useAppContext();
 
   // Se não estiver autenticado, renderizamos apenas a Tela de Login (controlada no MainContent, mas estruturalmente tratada aqui)
   if (!isAuthenticated) {
@@ -2196,8 +2243,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {/* Cabeçalho Móvel */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-10">
           <div className="flex items-center gap-2">
-            <Anchor className="text-cyan-500" />
-            <span className="font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">Marina Boat</span>
+            <Anchor className="text-cyan-500" size={20} />
+            <span className="font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+              {currentMarina?.name || (currentUser?.user_type === 'marina' ? `Marina ${currentUser.name.split(' ')[0]}` : 'Marina Boat')}
+            </span>
           </div>
           <button onClick={() => setSidebarOpen(true)} className="p-2 text-slate-600 dark:text-slate-300">
             <Menu />
@@ -2244,6 +2293,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [catalog, setCatalog] = useState<Service[]>([]); // Estes são os ITENS DO CATÁLOGO
   const [clients, setClients] = useState<User[]>([]);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
+  const [currentMarina, setCurrentMarina] = useState<Marina | null>(() => {
+    const stored = localStorage.getItem('marina_boat_info');
+    return stored ? JSON.parse(stored) : null;
+  });
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   // ...
   const [notifications, setNotifications] = useState<string[]>([]);
@@ -2304,7 +2359,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: agentsData, error: agentsError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_type', 'funcionario');
+      .eq('user_type', 'admin');
     if (agentsError) console.error('Error fetching agents:', agentsError);
     else if (agentsData) {
       const mappedAgents = agentsData.map((p: any) => ({
@@ -2315,8 +2370,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAgents(mappedAgents as User[]);
     }
 
+    // Buscar Marina vinculada se o usuário for role 'marina'
+    if (currentUser?.user_type === 'marina') {
+      const { data: marinaData } = await supabase
+        .from('marinas')
+        .select('*')
+        .eq('owner_id', currentUser.id)
+        .single();
+
+      if (marinaData) {
+        setCurrentMarina(marinaData as Marina);
+        localStorage.setItem('marina_boat_info', JSON.stringify(marinaData));
+      } else {
+        // Fallback: se não encontrar marina no DB mas for user 'marina', limpar cache de marina antiga
+        setCurrentMarina(null);
+        localStorage.removeItem('marina_boat_info');
+      }
+    }
+
+    // Buscar Orçamentos
+    const { data: quotesData } = await supabase.from('quotations').select('*');
+    if (quotesData) setQuotations(quotesData as Quotation[]);
+
     setLoading(false);
   };
+
+  // --- Realtime Synchronization ---
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'service_requests' },
+        (payload) => {
+          console.log('Realtime Service Change:', payload);
+          if (payload.eventType === 'INSERT') {
+            setServices(prev => {
+              // Evitar duplicidade se já adicionado localmente (otimista)
+              if (prev.find(s => s.id === payload.new.id)) return prev;
+              return [...prev, payload.new as ServiceRequest];
+            });
+            addNotification(`Nova solicitação: ${payload.new.category}`);
+          } else if (payload.eventType === 'UPDATE') {
+            setServices(prev => prev.map(s => s.id === payload.new.id ? { ...s, ...payload.new } : s));
+            // Notificação apenas se o status mudou significativamente
+            addNotification(`Serviço atualizado: ${payload.new.status}`);
+          } else if (payload.eventType === 'DELETE') {
+            setServices(prev => prev.filter(s => s.id !== payload.old.id));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'quotations' },
+        (payload) => {
+          console.log('Realtime Quotation Change:', payload);
+          if (payload.eventType === 'INSERT') {
+            setQuotations(prev => {
+              if (prev.find(q => q.id === payload.new.id)) return prev;
+              return [...prev, payload.new as Quotation];
+            });
+            addNotification("Novo orçamento disponível!");
+          } else if (payload.eventType === 'UPDATE') {
+            setQuotations(prev => prev.map(q => q.id === payload.new.id ? { ...q, ...payload.new } : q));
+          } else if (payload.eventType === 'DELETE') {
+            setQuotations(prev => prev.filter(q => q.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated]);
 
   // Manipulação de Tema
   useEffect(() => {
@@ -2408,7 +2537,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isAuthenticated]);
 
   // Lógica de Autenticação com Persistência
-  const login = async (type: 'admin' | 'user' | 'manual', email?: string, password?: string) => {
+  const login = async (type: UserType | 'manual', email?: string, password?: string) => {
     let user: User;
     let loginEmail, loginPassword;
 
@@ -2467,12 +2596,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
     } else {
-      // Login demo (admin ou user)
+      // Login demo (admin, marina ou user)
       if (type === 'admin') {
         user = CURRENT_USER_EMPLOYEE;
         loginEmail = 'alexandre.djavan@gmail.com';
         loginPassword = 'admin123';
-      } else {
+      } else if (type === 'marina') {
+        user = CURRENT_USER_MARINA_OWNER;
+        loginEmail = 'marina@marina.com';
+        loginPassword = 'marina123';
+      } else if (type === 'cliente') {
         user = CURRENT_USER_CLIENT;
         loginEmail = 'cliente@marina.com';
         loginPassword = 'user123';
@@ -2761,10 +2894,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateServiceStatus = (id: string, status: ServiceStatus) => {
+  const updateServiceStatus = async (id: string, status: ServiceStatus) => {
+    // Atualização otimista local
     setServices(prev => prev.map(s => s.id === id ? { ...s, status } : s));
-    addNotification(`Status atualizado para ${status}`);
-    addNotification(`Status atualizado para ${status}`);
+
+    const { error } = await supabase
+      .from('service_requests')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar status no banco:', error);
+      addNotification("Erro ao sincronizar status com o servidor.");
+    } else {
+      addNotification(`Status atualizado para ${status}`);
+    }
   };
 
   const addAgent = async (userData: Omit<User, 'id' | 'created_at' | 'avatar_initial' | 'user_type'>) => {
@@ -2779,7 +2923,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...safeUserData,
       full_name: name,
       id: uuid,
-      user_type: 'funcionario' as const,
+      user_type: 'admin',
     };
 
     const { data, error } = await supabase.from('profiles').insert([newAgent]).select();
@@ -2831,18 +2975,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addQuotation = async (data: Omit<Quotation, 'id' | 'created_at'>) => {
+    const { data: newQuote, error } = await supabase.from('quotations').insert([data]).select();
+    if (error) {
+      addNotification("Erro ao enviar orçamento: " + error.message);
+    } else if (newQuote && newQuote[0]) {
+      setQuotations([...quotations, newQuote[0] as Quotation]);
+      // Atualizar status do serviço solicitado para 'Aguardando Orçamento'
+      await updateServiceStatus(data.service_request_id, 'Aguardando Orçamento');
+      addNotification("Orçamento enviado com sucesso!");
+    }
+  };
+
+  const updateQuotationStatus = async (id: string, status: 'Aprovado' | 'Recusado') => {
+    const { error } = await supabase.from('quotations').update({ status }).eq('id', id);
+    if (error) {
+      addNotification("Erro ao atualizar orçamento: " + error.message);
+    } else {
+      setQuotations(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+      const quote = quotations.find(q => q.id === id);
+      if (quote) {
+        if (status === 'Aprovado') {
+          await updateServiceStatus(quote.service_request_id, 'Agendado');
+        } else {
+          await updateServiceStatus(quote.service_request_id, 'Orçamento Recusado');
+        }
+      }
+      addNotification(`Orçamento ${status === 'Aprovado' ? 'aprovado' : 'recusado'}!`);
+    }
+  };
+
+  const updateMarina = async (data: Partial<Marina>) => {
+    if (!currentMarina) return;
+    const { error } = await supabase.from('marinas').update(data).eq('id', currentMarina.id);
+    if (error) {
+      addNotification("Erro ao atualizar marina: " + error.message);
+    } else {
+      const updated = { ...currentMarina, ...data };
+      setCurrentMarina(updated);
+      localStorage.setItem('marina_boat_info', JSON.stringify(updated));
+      addNotification("Dados da marina atualizados!");
+    }
+  };
+
   return (
     <AppContext.Provider value={{
-      currentUser, isAuthenticated, login, logout, updateUserProfile,
-      vessels, addVessel, updateVessel, deleteVessel,
-      services, addService, updateService, deleteService, updateServiceStatus,
-      clients, addClient, updateClient, deleteClient, catalog, updateCatalogState,
-      agents, addAgent, updateAgent, deleteAgent,
-
-      notificationSettings, updateNotificationSettings,
-      currentView, setCurrentView,
-      isDarkMode, toggleTheme,
-      notifications, addNotification
+      currentUser,
+      isAuthenticated,
+      login,
+      logout,
+      updateUserProfile,
+      vessels,
+      services,
+      clients,
+      addClient,
+      updateClient,
+      deleteClient,
+      addVessel,
+      updateVessel,
+      deleteVessel,
+      catalog,
+      updateCatalogState,
+      addService,
+      updateService,
+      deleteService,
+      updateServiceStatus,
+      agents,
+      addAgent,
+      updateAgent,
+      deleteAgent,
+      currentView,
+      setCurrentView,
+      isDarkMode,
+      toggleTheme,
+      currentMarina,
+      updateMarina,
+      notifications,
+      addNotification,
+      notificationSettings,
+      updateNotificationSettings,
+      quotations,
+      addQuotation,
+      updateQuotationStatus
     }}>
       {children}
     </AppContext.Provider>

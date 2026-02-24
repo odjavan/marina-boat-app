@@ -4,28 +4,42 @@ import { User, Vessel, ServiceRequest } from './types';
 // ... variables
 
 // UUIDs estáticos para evitar churn e erros de "invalid syntax for type uuid"
-export const CURRENT_USER_CLIENT: User = {
-  id: '00000000-0000-0000-0000-000000000001', // UUID Válido
+export const CURRENT_USER_BOAT_OWNER: User = {
+  id: 'b0000000-0000-0000-0000-000000000002', // UUID real do Supabase Auth
   name: 'João Silva',
-  email: 'joao.silva@email.com',
+  email: 'cliente@marina.com',
   phone: '(11) 99876-5432',
   user_type: 'cliente',
   avatar_initial: 'J',
   created_at: '2023-01-15'
 };
 
-export const CURRENT_USER_EMPLOYEE: User = {
-  id: '00000000-0000-0000-0000-000000000002', // UUID Válido
-  name: 'Maria Marina',
-  email: 'maria.staff@marinaboat.com',
+export const CURRENT_USER_ADMIN: User = {
+  id: 'a0000000-0000-0000-0000-000000000001', // UUID real do Supabase Auth
+  name: 'Maria Admin',
+  email: 'alexandre.djavan@gmail.com',
   phone: '(21) 98888-7777',
-  user_type: 'funcionario',
+  user_type: 'admin',
   avatar_initial: 'M',
   created_at: '2022-05-20'
 };
 
+export const CURRENT_USER_MARINA_OWNER: User = {
+  id: 'c0000000-0000-0000-0000-000000000003', // UUID real do Supabase Auth
+  name: 'Carlos Marina',
+  email: 'marina@marina.com',
+  phone: '(21) 97777-6666',
+  user_type: 'marina',
+  avatar_initial: 'C',
+  created_at: '2024-01-10'
+};
+
+// Aliases para compatibilidade com código existente
+export const CURRENT_USER_CLIENT = CURRENT_USER_BOAT_OWNER;
+export const CURRENT_USER_EMPLOYEE = CURRENT_USER_ADMIN;
+
 export const MOCK_CLIENTS_LIST: User[] = [
-  CURRENT_USER_CLIENT,
+  CURRENT_USER_BOAT_OWNER,
   {
     id: '00000000-0000-0000-0000-000000000003', // UUID Válido
     name: 'Ana Souza',

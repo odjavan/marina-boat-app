@@ -13,7 +13,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Card: React.FC<CardProps> = ({ children, className, ...props }) => (
-  <div className={cn("bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300", className)} {...props}>
+  <div className={cn("glass-card rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300", className)} {...props}>
     {children}
   </div>
 );
