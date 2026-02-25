@@ -4,7 +4,7 @@ import { AlertCircle, Clock, Droplets, ArrowRight } from 'lucide-react';
 import { useAppContext } from '../App';
 
 export const ProactiveAlerts = () => {
-    const { services, vessels, quotations, currentUser } = useAppContext();
+    const { services, vessels, quotations, currentUser, addNotification } = useAppContext();
 
     if (!currentUser) return null;
 
@@ -80,7 +80,10 @@ export const ProactiveAlerts = () => {
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                                     {alert.description}
                                 </p>
-                                <button className="mt-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all">
+                                <button
+                                    onClick={() => addNotification(`Notificação enviada com sucesso para os proprietários das embarcações! \n\nInsight: ${alert.title}`, 'info')}
+                                    className="mt-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all hover:text-cyan-600"
+                                >
                                     {alert.action} <ArrowRight size={12} />
                                 </button>
                             </div>

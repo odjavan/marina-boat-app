@@ -25,6 +25,20 @@ export const DebugEnv = () => {
                         </span>
                     ) : <span className="text-red-500 font-bold">UNDEFINED/MISSING</span>}
                 </div>
+                <div>
+                    <span className="text-gray-400">OPENWEATHER_KEY:</span><br />
+                    {import.meta.env.VITE_OPENWEATHER_API_KEY ? (
+                        <span className="text-green-400">
+                            {import.meta.env.VITE_OPENWEATHER_API_KEY.substring(0, 8)}... (OK)
+                        </span>
+                    ) : <span className="text-red-500 font-bold">MISSING (ERRO)</span>}
+                </div>
+                <div>
+                    <span className="text-gray-400">COORDENADAS PADRÃO:</span><br />
+                    <span className="text-cyan-400">
+                        LAT: {import.meta.env.VITE_MARINA_LAT || 'Def'} | LON: {import.meta.env.VITE_MARINA_LON || 'Def'}
+                    </span>
+                </div>
             </div>
             <div className="mt-2 text-gray-500 italic">
                 Se aparecer "PLACEHOLDER", o sistema não está lendo o arquivo .env corretamente.

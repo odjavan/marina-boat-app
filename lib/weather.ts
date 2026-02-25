@@ -6,14 +6,14 @@ export interface WeatherData {
     description: string;
 }
 
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-
 export const fetchWeather = async (
     lat: string = import.meta.env.VITE_MARINA_LAT || '-23.0039',
     lon: string = import.meta.env.VITE_MARINA_LON || '-43.3231'
 ): Promise<WeatherData | null> => {
+    const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+
     if (!API_KEY) {
-        console.warn('OpenWeather API Key missing');
+        console.warn('OpenWeather API Key missing in environment variables');
         return null;
     }
 

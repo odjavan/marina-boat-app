@@ -39,6 +39,8 @@ import { ProactiveAlerts } from './components/ProactiveAlerts';
 import { ClientCard } from './components/ClientCard';
 import { VesselCard } from './components/VesselCard';
 import { DockMap } from './components/DockMap';
+import { Toast } from './components/Toast';
+
 
 // --- Contextos ---
 
@@ -76,8 +78,8 @@ interface AppContextType {
   toggleTheme: () => void;
   currentMarina: Marina | null;
   updateMarina: (data: Partial<Marina>) => void;
-  notifications: string[];
-  addNotification: (msg: string) => void;
+  notifications: any[];
+  addNotification: (msg: string, type?: 'success' | 'error' | 'info') => void;
   notificationSettings: { email: boolean; push: boolean; sms: boolean };
   updateNotificationSettings: (settings: { email: boolean; push: boolean; sms: boolean }) => void;
 
@@ -2261,15 +2263,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
       <>
         {/* Notificação Toast para Tela de Login */}
-        {notifications.length > 0 && (
-          <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-            {notifications.map((msg, idx) => (
-              <div key={idx} className="bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-in slide-in-from-right fade-in">
-                {msg}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+          {notifications.map((n: any) => (
+            <div key={n.id} className="pointer-events-auto">
+              <Toast
+                message={n.message}
+                type={n.type}
+                onClose={() => setNotifications(prev => prev.filter((notif: any) => notif.id !== n.id))}
+              />
+            </div>
+          ))}
+        </div>
         <LoginScreen />
       </>
     );
@@ -2295,16 +2299,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         {/* Área de Conteúdo Rolável */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 relative">
-          {/* Notificação Toast Simples */}
-          {notifications.length > 0 && (
-            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-              {notifications.map((msg, idx) => (
-                <div key={idx} className="bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-in slide-in-from-right fade-in">
-                  {msg}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Notificação Toast Premium */}
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+            {notifications.map((n: any) => (
+              <div key={n.id} className="pointer-events-auto">
+                <Toast
+                  message={n.message}
+                  type={n.type}
+                  onClose={() => setNotifications(prev => prev.filter((notif: any) => notif.id !== n.id))}
+                />
+              </div>
+            ))}
+          </div>
           <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
@@ -2561,11 +2567,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Auxiliar de Notificação
-  const addNotification = (msg: string) => {
-    setNotifications(prev => [...prev, msg]);
+  const addNotification = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setNotifications(prev => [...prev, { id, message: msg, type } as any]);
     setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n !== msg));
-    }, 3000);
+      setNotifications(prev => prev.filter((n: any) => n.id !== id));
+    }, 5000);
   };
 
   // Buscar Dados na Autenticação
