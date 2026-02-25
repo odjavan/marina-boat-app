@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
 import { DataTable, type Column } from './components/DataTable';
-import { DebugEnv } from './components/DebugEnv';
 import { ServiceCatalog } from './components/ServiceCatalog';
 import { User, Vessel, ServiceRequest, ViewState, ServiceStatus, Service, Marina, Quotation, UserType } from './types';
 
@@ -79,8 +78,12 @@ interface AppContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
   currentMarina: Marina | null;
-  updateMarina: (data: Partial<Marina>) => void;
+  marinas: Marina[];
+  addMarina: (marina: Omit<Marina, 'id' | 'created_at' | 'updated_at'>) => void;
+  updateMarina: (id: string, data: Partial<Marina>) => void;
+  deleteMarina: (id: string) => void;
   notifications: any[];
+  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
   addNotification: (msg: string, type?: 'success' | 'error' | 'info') => void;
   notificationSettings: { email: boolean; push: boolean; sms: boolean };
   updateNotificationSettings: (settings: { email: boolean; push: boolean; sms: boolean }) => void;
@@ -217,7 +220,6 @@ const LoginScreen = () => {
           © 2024 Marina Boat. Todos os direitos reservados.
         </p>
       </div>
-      <DebugEnv />
     </div>
   );
 };
@@ -264,6 +266,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
     ],
     marina: [
       { id: 'dashboard', label: 'Painel da Marina', icon: LayoutDashboard },
+      { id: 'clients', label: 'Clientes', icon: Users },
       { id: 'services', label: 'Fila de Serviços', icon: ClipboardList },
       { id: 'vessels', label: 'Embarcações na Marina', icon: Ship },
       { id: 'quotations', label: 'Orçamentos', icon: DollarSign },
@@ -2262,7 +2265,7 @@ const SettingsPage = () => {
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { notifications, isAuthenticated, currentMarina, currentUser } = useAppContext();
+  const { notifications, setNotifications, isAuthenticated, currentMarina, currentUser } = useAppContext();
 
   // Se não estiver autenticado, renderizamos apenas a Tela de Login (controlada no MainContent, mas estruturalmente tratada aqui)
   if (!isAuthenticated) {
@@ -2350,11 +2353,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const stored = localStorage.getItem('marina_boat_info');
     return stored ? JSON.parse(stored) : null;
   });
+  const [marinas, setMarinas] = useState<Marina[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   // ...
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [agents, setAgents] = useState<User[]>([]);
   const [notificationSettings, setNotificationSettings] = useState({ email: true, push: false, sms: false });
@@ -2391,10 +2395,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
     // Buscar Clientes (Perfis)
-    const { data: profilesData, error: profilesError } = await supabase
+    let clientsQuery = supabase
       .from('profiles')
       .select('*')
       .eq('user_type', 'cliente');
+
+    // Se o usuário for 'marina', filtrar apenas clientes daquela marina
+    if (currentUser?.user_type === 'marina') {
+      const { data: marinaData } = await supabase
+        .from('marinas')
+        .select('id')
+        .eq('owner_id', currentUser.id)
+        .single();
+
+      if (marinaData) {
+        clientsQuery = clientsQuery.eq('marina_id', marinaData.id);
+      }
+    }
+
+    const { data: profilesData, error: profilesError } = await clientsQuery;
+
     if (profilesError) console.error('Error fetching clients:', profilesError);
     else if (profilesData) {
       // Mapear perfis para incluir avatar_initial derivado do nome
@@ -2444,6 +2464,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Buscar Orçamentos
     const { data: quotesData } = await supabase.from('quotations').select('*');
     if (quotesData) setQuotations(quotesData as Quotation[]);
+
+    // Buscar Todas as Marinas se for Admin
+    if (currentUser?.user_type === 'admin') {
+      const { data: marinasData } = await supabase.from('marinas').select('*');
+      if (marinasData) setMarinas(marinasData as Marina[]);
+    }
 
     setLoading(false);
   };
@@ -2724,7 +2750,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 'name' deve virar 'full_name' para bater com o schema do banco
     const { password, name, ...safeUserData } = userData as any;
 
-    const newUser = {
+    const newUser: any = {
       ...safeUserData,
       full_name: name, // Mapeando 'name' (do form) para 'full_name' (do banco)
       // Gerando uma string tipo UUID aleatória já que não estamos usando Cadastro de Auth real ainda para este fluxo "Admin cria Usuário"
@@ -2735,8 +2761,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return v.toString(16);
       }),
       user_type: 'cliente' as const,
-      // avatar_initial removido pois não está no schema válido
     };
+
+    // Vincular à marina se o criador for um dono de marina
+    if (currentUser?.user_type === 'marina' && currentMarina) {
+      newUser.marina_id = currentMarina.id;
+    }
 
 
 
@@ -2813,18 +2843,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addVessel = async (vesselData: Omit<Vessel, 'id' | 'created_at'>) => {
     if (!currentUser) return;
 
-    // Lidar com owner_id similar ao serviço
-    let ownerId = currentUser.id;
-    // lógica para obter ID real se mock... simplificado para brevidade, assumindo que a lógica 'owner_email' do frontend lida com a seleção de usuário existente adequada para Admin
-    // Se admin está criando, vesselData.owner_id deve ser definido a partir da seleção do formulário.
-    // Se proprietário está criando, vesselData.owner_id pode precisar ser definido ou inferido.
-
-    // lógica dentro do componente UI define owner_id via pesquisa de email normalmente?
-    // A Interface 'Vessel' agora tem owner_id.
+    // Adicionar marina_id se o usuário for marina
+    const payload = { ...vesselData };
+    if (currentUser.user_type === 'marina' && currentUser.marina_id) {
+      payload.marina_id = currentUser.marina_id;
+    }
 
     const { data, error } = await supabase
       .from('boats') // Nome da tabela é boats
-      .insert([vesselData]) // vesselData deve corresponder às colunas da tabela
+      .insert([payload]) // Usar o payload com marina_id
       .select();
 
     if (error) {
@@ -3059,16 +3086,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateMarina = async (data: Partial<Marina>) => {
-    if (!currentMarina) return;
-    const { error } = await supabase.from('marinas').update(data).eq('id', currentMarina.id);
+  const addMarina = async (data: Omit<Marina, 'id' | 'created_at' | 'updated_at'>) => {
+    const { data: newMarina, error } = await supabase.from('marinas').insert([data]).select();
+    if (error) {
+      addNotification("Erro ao cadastrar marina: " + error.message);
+    } else if (newMarina && newMarina[0]) {
+      setMarinas([...marinas, newMarina[0] as Marina]);
+      addNotification("Marina cadastrada com sucesso!");
+    }
+  };
+
+  const updateMarina = async (id: string, data: Partial<Marina>) => {
+    const { error } = await supabase.from('marinas').update(data).eq('id', id);
     if (error) {
       addNotification("Erro ao atualizar marina: " + error.message);
     } else {
-      const updated = { ...currentMarina, ...data };
-      setCurrentMarina(updated);
-      localStorage.setItem('marina_boat_info', JSON.stringify(updated));
+      setMarinas(prev => prev.map(m => m.id === id ? { ...m, ...data } : m));
+      if (currentMarina?.id === id) {
+        const updated = { ...currentMarina, ...data };
+        setCurrentMarina(updated);
+        localStorage.setItem('marina_boat_info', JSON.stringify(updated));
+      }
       addNotification("Dados da marina atualizados!");
+    }
+  };
+
+  const deleteMarina = async (id: string) => {
+    const { error } = await supabase.from('marinas').delete().eq('id', id);
+    if (error) {
+      addNotification("Erro ao remover marina: " + error.message);
+    } else {
+      setMarinas(prev => prev.filter(m => m.id !== id));
+      if (currentMarina?.id === id) {
+        setCurrentMarina(null);
+        localStorage.removeItem('marina_boat_info');
+      }
+      addNotification("Marina removida com sucesso!");
     }
   };
 
@@ -3098,14 +3151,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addAgent,
       updateAgent,
       deleteAgent,
+      marinas,
+      addMarina,
+      updateMarina,
+      deleteMarina,
+      notifications,
+      setNotifications,
+      addNotification,
       currentView,
       setCurrentView,
       isDarkMode,
       toggleTheme,
       currentMarina,
-      updateMarina,
-      notifications,
-      addNotification,
       notificationSettings,
       updateNotificationSettings,
       quotations,
@@ -3119,6 +3176,216 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
+// --- Página: Marinas (Apenas Admin) ---
+
+const Marinas = () => {
+  const { marinas, addMarina, updateMarina, deleteMarina, agents } = useAppContext();
+  const [editingMarina, setEditingMarina] = useState<Marina | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [marinaToDelete, setMarinaToDelete] = useState<Marina | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    owner_id: '',
+    address: '',
+    city: '',
+    state: '',
+    phone: '',
+    email: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingMarina) {
+      updateMarina(editingMarina.id, formData);
+    } else {
+      addMarina(formData);
+    }
+    setFormData({ name: '', owner_id: '', address: '', city: '', state: '', phone: '', email: '' });
+    setEditingMarina(null);
+    setIsModalOpen(false);
+  };
+
+  const marinaOwners = agents.filter(a => a.user_type === 'marina' || a.user_type === 'admin'); // Simplificação para demo
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão de Marinas</h2>
+          <p className="text-slate-500">Cadastre e gerencie as marinas do sistema.</p>
+        </div>
+        <Button onClick={() => { setEditingMarina(null); setFormData({ name: '', owner_id: '', address: '', city: '', state: '', phone: '', email: '' }); setIsModalOpen(true); }}>
+          <Plus size={18} /> Nova Marina
+        </Button>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium">
+              <tr>
+                <th className="px-6 py-4">Nome da Marina</th>
+                <th className="px-6 py-4">Localização</th>
+                <th className="px-6 py-4">Contato</th>
+                <th className="px-6 py-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {marinas.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                    Nenhuma marina cadastrada.
+                  </td>
+                </tr>
+              ) : (
+                marinas.map(marina => (
+                  <tr key={marina.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 rounded-lg">
+                          <Building2 size={20} />
+                        </div>
+                        {marina.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                      {marina.city}, {marina.state}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                      <div>{marina.email}</div>
+                      <div className="text-xs opacity-70">{marina.phone}</div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingMarina(marina);
+                            setFormData({
+                              name: marina.name || '',
+                              owner_id: marina.owner_id || '',
+                              address: marina.address || '',
+                              city: marina.city || '',
+                              state: marina.state || '',
+                              phone: marina.phone || '',
+                              email: marina.email || ''
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-blue-500 rounded bg-slate-50 dark:bg-slate-800 transition-colors"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => setMarinaToDelete(marina)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 rounded bg-slate-50 dark:bg-slate-800 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Dialog isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingMarina(null); }} title={editingMarina ? "Editar Marina" : "Nova Marina"}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Nome da Marina</Label>
+            <Input
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Ex: Marina Tropical"
+            />
+          </div>
+          <div>
+            <Label>Dono da Marina (E-mail)</Label>
+            <Input
+              required
+              value={formData.owner_id}
+              onChange={(e) => setFormData({ ...formData, owner_id: e.target.value })}
+              placeholder="ID do Perfil do Dono"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">* Para esta demo, insira o ID UUID do usuário dono.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Cidade</Label>
+              <Input
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Ex: Angra dos Reis"
+              />
+            </div>
+            <div>
+              <Label>Estado</Label>
+              <Input
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                placeholder="Ex: RJ"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>E-mail de Contato</Label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="contato@marina.com"
+            />
+          </div>
+          <div>
+            <Label>Telefone</Label>
+            <Input
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button type="submit">{editingMarina ? 'Salvar Alterações' : 'Cadastrar Marina'}</Button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        isOpen={!!marinaToDelete}
+        onClose={() => setMarinaToDelete(null)}
+        title="Confirmar Exclusão"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-red-800 dark:text-red-200">
+            <AlertTriangle className="h-6 w-6 shrink-0" />
+            <p>Você excluir a marina <strong>{marinaToDelete?.name}</strong>?</p>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="ghost" onClick={() => setMarinaToDelete(null)}>Cancelar</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                if (marinaToDelete) {
+                  deleteMarina(marinaToDelete.id);
+                  setMarinaToDelete(null);
+                }
+              }}
+            >
+              Excluir
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    </div>
+  );
+};
+
+
 const MainContent = () => {
   const { currentView, services, vessels } = useAppContext();
 
@@ -3128,6 +3395,7 @@ const MainContent = () => {
     case 'services': return <Services />;
     case 'history': return <ServiceHistory services={services} vessels={vessels} />;
     case 'clients': return <Clients />;
+    case 'marinas': return <Marinas />;
     case 'agents': return <Agents />;
     case 'profile': return <Profile />;
     case 'settings': return <SettingsPage />;

@@ -9,6 +9,7 @@ export interface User {
   avatar_initial: string;
   created_at: string;
   cpf?: string;
+  marina_id?: string; // ID da marina à qual o usuário pertence
 }
 
 export type VesselType = 'Lancha' | 'Veleiro' | 'Iate' | 'Jet Ski' | 'Outros';
