@@ -41,6 +41,8 @@ import { VesselCard } from './components/VesselCard';
 import { DockMap } from './components/DockMap';
 import { Toast } from './components/Toast';
 
+const APP_VERSION = "v1.0.2";
+
 
 // --- Contextos ---
 
@@ -366,6 +368,10 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
               <LogOut size={20} />
             </button>
           </Tooltip>
+
+          <div className="py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest pointer-events-none select-none">
+            {APP_VERSION}
+          </div>
         </div>
       </aside>
     </>
