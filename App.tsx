@@ -40,7 +40,9 @@ import { VesselCard } from './components/VesselCard';
 import { DockMap } from './components/DockMap';
 import { Toast } from './components/Toast';
 
-const APP_VERSION = "v1.0.2";
+import { InstallGuide } from './components/InstallGuide';
+
+const APP_VERSION = "v1.0.3";
 
 
 // --- Contextos ---
@@ -139,7 +141,7 @@ const LoginScreen = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
               Marina Boat
             </h1>
-            <p className="text-slate-500 text-sm mt-2">Gestão Náutica Inteligente</p>
+            <p className="text-slate-500 text-sm mt-2">Gestão Náutica Inteligente • {APP_VERSION}</p>
           </div>
 
           <form onSubmit={handleManualLogin} className="space-y-4">
@@ -182,8 +184,8 @@ const LoginScreen = () => {
           </form>
 
           <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-xs text-center text-slate-500 mb-4 font-medium uppercase tracking-wider">
-              Área de Testes
+            <p className="text-[10px] text-center text-slate-400 mb-4 font-bold uppercase tracking-[0.2em]">
+              Acesso Rápido (Demonstração)
             </p>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -216,8 +218,8 @@ const LoginScreen = () => {
             </div>
           </div>
         </Card>
-        <p className="text-center text-slate-400 text-xs mt-6">
-          © 2024 Marina Boat. Todos os direitos reservados.
+        <p className="text-center text-slate-400 text-[10px] mt-6 font-medium uppercase tracking-widest">
+          © 2024-2026 Boat Pass • {APP_VERSION}
         </p>
       </div>
     </div>
@@ -386,8 +388,11 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
 const Dashboard = () => {
   const {
     currentUser, vessels, services, clients, agents,
-    setCurrentView, currentMarina, marinaLocation, setMarinaLocation
+    setCurrentView, currentMarina, marinaLocation, setMarinaLocation, addNotification
   } = useAppContext();
+
+  const [locationToConfirm, setLocationToConfirm] = useState<LocationData | null>(null);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
 
   if (!currentUser) return null;
 
@@ -448,7 +453,7 @@ const Dashboard = () => {
               value={marinaLocation.name}
               onChange={(e) => {
                 const loc = PRESET_LOCATIONS.find(l => l.name === e.target.value);
-                if (loc) setMarinaLocation(loc);
+                if (loc) setLocationToConfirm(loc);
               }}
             >
               {PRESET_LOCATIONS.map(loc => (
@@ -456,6 +461,15 @@ const Dashboard = () => {
               ))}
             </select>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsInstallGuideOpen(true)}
+            className="text-slate-500 hover:text-blue-600 border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 rounded-xl"
+          >
+            <Smartphone size={16} className="mr-1.5" />
+            App no Celular
+          </Button>
           {currentUser.user_type === 'cliente' && (
             <Button
               onClick={() => setCurrentView('services')}
@@ -535,6 +549,41 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmação de Troca de Região */}
+      <Dialog
+        isOpen={!!locationToConfirm}
+        onClose={() => setLocationToConfirm(null)}
+        title="Confirmar Mudança de Região"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              Você deseja alterar a exibição climática para <strong>{locationToConfirm?.name}</strong>?
+            </p>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setLocationToConfirm(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => {
+              if (locationToConfirm) {
+                setMarinaLocation(locationToConfirm);
+                addNotification(`Região alterada para ${locationToConfirm.name}`, 'success');
+                setLocationToConfirm(null);
+              }
+            }}>
+              Confirmar Alteração
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Guia de Instalação PWA */}
+      <InstallGuide
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
+      />
     </div>
   );
 };

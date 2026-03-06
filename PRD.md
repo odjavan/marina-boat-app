@@ -3,6 +3,9 @@
 ## Visão Geral
 **Marina Boat** é um ecossistema digital para o setor náutico que conecta proprietários de embarcações a marinas e prestadores de serviços. O objetivo é simplificar a gestão de barcos, solicitações de manutenção, abastecimento e limpeza através de uma interface moderna e intuitiva.
 
+**Domínio Oficial:** [https://marinaboat.boatpass.com.br](https://marinaboat.boatpass.com.br) (Configurado via Coolify)
+
+
 ## Escopo Técnica (MVP)
 - **Frontend:** React, Vite, Tailwind CSS.
 - **Backend/DB:** Supabase (Auth, Tables, RLS).

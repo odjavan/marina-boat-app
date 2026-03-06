@@ -16,3 +16,5 @@ Este documento registra as dificuldades técnicas e erros recorrentes encontrado
 
 ## 4. Deploy e Sincronização
 - **Script de Sincronização:** Use o `sync_to_official.ps1` para mover alterações da pasta de teste para a pasta oficial. Não edite a pasta oficial diretamente sem testar no BKP primeiro.
+- **Gerenciamento:** O deploy oficial é gerenciado via **Coolify** no VPS IP `212.85.17.131`. Configurações de domínio e SSL devem ser feitas diretamente no painel do Coolify.
+
