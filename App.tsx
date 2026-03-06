@@ -4,7 +4,7 @@ import {
   HelpCircle, Home, Ship, Briefcase, Plus, Search,
   CheckCircle2, Clock, AlertTriangle, Moon, Sun, Menu, LayoutDashboard,
   Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2, Badge as BadgeIcon,
-  TrendingUp, Activity as ActivityLucide, Building2, DollarSign, ClipboardList
+  TrendingUp, Activity as ActivityLucide, Building2, DollarSign, ClipboardList, Smartphone
 } from 'lucide-react';
 import { Card, Button, Badge, Input, Select, Label, Dialog, cn } from './components/ui';
 import { DataTable, type Column } from './components/DataTable';
