@@ -9,6 +9,11 @@
 ## 🍱 Funcionalidades v1.0 (MVP)
 - [ ] Ativar Alertas de Documentos (Frontend avisando sobre validade)
 - [/] Integrar Meteorologia (Ajustando API Key e UI do Dashboard - v1.0.3)
+- [/] Refinamento de Segurança e UX (v1.0.5)
+    - [ ] Remover "Acesso Rápido" da tela de login
+    - [ ] Adicionar toggle de senha (olhinho) em todos os campos de senha
+    - [ ] Implementar fluxo de "Esqueci minha senha"
+    - [ ] Validar fluxos de autenticação do Supabase
 - [ ] Implementar exportação de Relatórios Financeiros (PDF/CSV)
 
 ## 📡 Roadmap Futuro

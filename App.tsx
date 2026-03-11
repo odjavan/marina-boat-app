@@ -42,7 +42,7 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.4";
+const APP_VERSION = "v1.0.5";
 
 
 // --- Contextos ---
@@ -181,42 +181,25 @@ const LoginScreen = () => {
             <Button type="submit" className="w-full h-11 text-base">
               Entrar
             </Button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] text-center text-slate-400 mb-4 font-bold uppercase tracking-[0.2em]">
-              Acesso Rápido (Demonstração)
-            </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="text-center mt-4">
               <button
-                onClick={() => handleDemoLogin('admin')}
-                className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
+                type="button"
+                onClick={async () => {
+                  const email = prompt("Digite seu e-mail para recuperar a senha:");
+                  if (email) {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: window.location.origin
+                    });
+                    if (error) alert("Erro ao enviar e-mail: " + error.message);
+                    else alert("E-mail de recuperação enviado com sucesso!");
+                  }
+                }}
+                className="text-sm text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
               >
-                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Admin</div>
-                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-cyan-600">
-                  admin@<br />admin123
-                </div>
-              </button>
-              <button
-                onClick={() => handleDemoLogin('marina')}
-                className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
-              >
-                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Marina</div>
-                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-emerald-600">
-                  marina@<br />marina123
-                </div>
-              </button>
-              <button
-                onClick={() => handleDemoLogin('cliente')}
-                className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
-              >
-                <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Embarcação</div>
-                <div className="text-[9px] text-slate-500 font-mono mt-1 group-hover:text-blue-600">
-                  cliente@<br />user123
-                </div>
+                Esqueci minha senha
               </button>
             </div>
-          </div>
+          </form>
         </Card>
         <p className="text-center text-slate-400 text-[10px] mt-6 font-medium uppercase tracking-widest">
           © 2024-2026 Boat Pass • {APP_VERSION}
@@ -595,6 +578,7 @@ const Clients = () => {
   const [editingClient, setEditingClient] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -752,14 +736,24 @@ const Clients = () => {
           </div>
           <div>
             <Label>Senha Provisória</Label>
-            <Input
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="******"
-            />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="******"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <p className="text-xs text-slate-400 mt-1">O cliente deverá alterar a senha no primeiro acesso.</p>
           </div>
 
@@ -1974,6 +1968,7 @@ const Agents = () => {
   const [editingAgent, setEditingAgent] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -2137,14 +2132,24 @@ const Agents = () => {
           </div>
           <div>
             <Label>Senha</Label>
-            <Input
-              name="password"
-              type="password"
-              required={!editingAgent}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder={editingAgent ? "Deixe em branco para manter" : "******"}
-            />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required={!editingAgent}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder={editingAgent ? "Deixe em branco para manter" : "******"}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">

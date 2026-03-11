@@ -13,6 +13,8 @@ Transformar o Marina Boat em um Progressive Web App (PWA) instalável, permitind
 1. **Manifesto Web:** Implementação do `manifest.json` com configurações de nome, ícones e modo de exibição.
 2. **Ícones PWA:** Criação e disponibilização de ícones em 192x192 e 512x512.
 3. **Integração HTML:** Vinculação do manifesto e meta tags de app no `index.html`.
+4. **Segurança de Autenticação:** Remoção de acessos de demonstração e implementação de fluxos reais de login e recuperação de senha.
+5. **UX de Login:** Implementação de visibilidade de senha e feedback visual claro.
 
 ## 🛠️ Diretrizes de Entrega e Deploy
 Em cada finalização de tarefa, o Agente deve:
