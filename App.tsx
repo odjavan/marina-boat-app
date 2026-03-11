@@ -3443,7 +3443,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addQuotation,
       updateQuotationStatus,
       marinaLocation,
-      setMarinaLocation
+      setMarinaLocation,
+      isResetting,
+      setIsResetting
     }}>
       {children}
     </AppContext.Provider>
