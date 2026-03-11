@@ -9,6 +9,7 @@ export interface User {
   avatar_initial: string;
   created_at: string;
   cpf?: string;
+  license_expiry?: string; // Validade da Habilitação (Arrais)
   marina_id?: string; // ID da marina à qual o usuário pertence
 }
 
@@ -27,6 +28,7 @@ export interface Vessel {
   capacity?: number; // Added to match DB and form
   price_per_hour?: number; // Added to match DB and form
   registration_number: string;
+  doc_expiry?: string; // Validade do Documento
   photos: string[];
   documents: string[]; // URLs or JSON
   is_archived: boolean;

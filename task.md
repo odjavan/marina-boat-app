@@ -7,7 +7,7 @@
 - [ ] Sincronizar pasta oficial com `sync_to_official.ps1`
 
 ## 🍱 Funcionalidades v1.0 (MVP)
-- [ ] Ativar Alertas de Documentos (Frontend avisando sobre validade)
+- [x] Alertas de Documentos (Frontend avisando sobre validade) (v1.0.7)
 - [/] Integrar Meteorologia (Ajustando API Key e UI do Dashboard - v1.0.3)
 - [x] Refinamento de Segurança e UX (v1.0.5)
     - [x] Remover "Acesso Rápido" da tela de login

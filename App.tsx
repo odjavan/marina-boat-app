@@ -42,7 +42,7 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.6";
+const APP_VERSION = "v1.0.7";
 
 
 // --- Contextos ---
@@ -658,6 +658,7 @@ const Clients = () => {
     email: '',
     phone: '',
     cpf: '',
+    license_expiry: '',
     password: ''
   });
 
@@ -685,7 +686,7 @@ const Clients = () => {
     } else {
       addClient(formData);
     }
-    setFormData({ name: '', email: '', phone: '', cpf: '', password: '' });
+    setFormData({ name: '', email: '', phone: '', cpf: '', license_expiry: '', password: '' });
     setEditingClient(null);
     setIsModalOpen(false);
   };
@@ -697,7 +698,7 @@ const Clients = () => {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Clientes Cadastrados</h2>
           <p className="text-slate-500">Gerencie os usuários da marina.</p>
         </div>
-        <Button onClick={() => { setEditingClient(null); setFormData({ name: '', email: '', phone: '', cpf: '', password: '' }); setIsModalOpen(true); }}>
+        <Button onClick={() => { setEditingClient(null); setFormData({ name: '', email: '', phone: '', cpf: '', license_expiry: '', password: '' }); setIsModalOpen(true); }}>
           <Plus size={18} /> Novo Cliente
         </Button>
       </div>
@@ -738,6 +739,7 @@ const Clients = () => {
                             email: client.email || '',
                             phone: client.phone || '',
                             cpf: client.cpf || '',
+                            license_expiry: client.license_expiry || '',
                             password: ''
                           });
                           setIsModalOpen(true);
@@ -807,6 +809,16 @@ const Clients = () => {
                 placeholder="000.000.000-00"
               />
             </div>
+          </div>
+          <div>
+            <Label>Validade da Habilitação (Arrais)</Label>
+            <Input
+              name="license_expiry"
+              type="date"
+              required
+              value={formData.license_expiry}
+              onChange={(e) => setFormData({ ...formData, license_expiry: e.target.value })}
+            />
           </div>
           <div>
             <Label>Senha Provisória</Label>
@@ -970,6 +982,7 @@ const Vessels = () => {
       capacity: parseInt(formData.get('capacity') as string),
       price_per_hour: parseFloat(formData.get('price') as string),
       registration_number: formData.get('registration_number') as string,
+      doc_expiry: formData.get('doc_expiry') as string,
       photos: photoPreviews,
       documents: docs.map(d => d.name),
       owner_id: ownerEmail || (editingVessel ? editingVessel.owner_id : currentUser.id),
@@ -1282,9 +1295,15 @@ const Vessels = () => {
               <input type="hidden" name="price" value="0" />
             </div>
 
-            <div>
-              <Label>Matrícula / Registro <span className="text-red-500">*</span></Label>
-              <Input name="registration_number" placeholder="Ex: 442123984-2" required defaultValue={editingVessel?.registration_number} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Matrícula / Registro <span className="text-red-500">*</span></Label>
+                <Input name="registration_number" placeholder="Ex: 442123984-2" required defaultValue={editingVessel?.registration_number} />
+              </div>
+              <div>
+                <Label>Validade do Documento <span className="text-red-500">*</span></Label>
+                <Input name="doc_expiry" type="date" required defaultValue={editingVessel?.doc_expiry} />
+              </div>
             </div>
           </div>
 

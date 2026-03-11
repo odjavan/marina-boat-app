@@ -4,7 +4,7 @@ import { AlertCircle, Clock, Droplets, ArrowRight } from 'lucide-react';
 import { useAppContext } from '../App';
 
 export const ProactiveAlerts = () => {
-    const { services, vessels, quotations, currentUser, addNotification } = useAppContext();
+    const { services, vessels, quotations, currentUser, addNotification, clients } = useAppContext();
 
     if (!currentUser) return null;
 
@@ -27,31 +27,63 @@ export const ProactiveAlerts = () => {
         }
     }
 
-    // 2. Alerta de Manutenção/Limpeza (Para Marina/Admin)
+    // 2. Alertas de Documentação (Para Marina/Admin)
     if (currentUser.user_type !== 'cliente') {
-        const needsCleaning = vessels.filter((_, idx) => idx % 3 === 0).slice(0, 2); // Simulação baseada em lógica de tempo
-        if (needsCleaning.length > 0) {
-            alerts.push({
-                id: 'cleaning-alert',
-                title: 'Sugestão de Manutenção',
-                description: `${needsCleaning.length} embarcações estão há mais de 15 dias sem limpeza.`,
-                icon: Droplets,
-                color: 'blue',
-                action: 'Notificar Proprietários'
-            });
-        }
+        // Alertas de Embarcações (Documento Vencido ou Vencendo)
+        const today = new Date();
+        const nextMonth = new Date();
+        nextMonth.setDate(today.getDate() + 30);
 
-        const stalledServices = services.filter(s => s.status === 'Em Análise').length;
-        if (stalledServices > 0) {
-            alerts.push({
-                id: 'stalled-services',
-                title: 'Atenção às Demandas',
-                description: `${stalledServices} solicitações estão em análise há mais de 24h.`,
-                icon: AlertCircle,
-                color: 'red',
-                action: 'Acelerar Processo'
-            });
-        }
+        vessels.forEach(vessel => {
+            if (vessel.doc_expiry) {
+                const expiry = new Date(vessel.doc_expiry);
+                if (expiry < today) {
+                    alerts.push({
+                        id: `vessel-expired-${vessel.id}`,
+                        title: 'Documento Vencido',
+                        description: `A embarcação ${vessel.name} está com a documentação irregular desde ${expiry.toLocaleDateString('pt-BR')}.`,
+                        icon: AlertCircle,
+                        color: 'red',
+                        action: 'Notificar Proprietário'
+                    });
+                } else if (expiry < nextMonth) {
+                    alerts.push({
+                        id: `vessel-warning-${vessel.id}`,
+                        title: 'Documento Próximo ao Vencimento',
+                        description: `O documento de ${vessel.name} vence em ${expiry.toLocaleDateString('pt-BR')}.`,
+                        icon: Clock,
+                        color: 'amber',
+                        action: 'Avisar Proprietário'
+                    });
+                }
+            }
+        });
+
+        // Alertas de Clientes (Arrais/Habilitação)
+        clients.forEach(client => {
+            if (client.license_expiry) {
+                const expiry = new Date(client.license_expiry);
+                if (expiry < today) {
+                    alerts.push({
+                        id: `client-expired-${client.id}`,
+                        title: 'Arrais Vencida',
+                        description: `O cliente ${client.name} está com a habilitação vencida.`,
+                        icon: AlertCircle,
+                        color: 'red',
+                        action: 'Notificar Cliente'
+                    });
+                } else if (expiry < nextMonth) {
+                    alerts.push({
+                        id: `client-warning-${client.id}`,
+                        title: 'Arrais Vencendo',
+                        description: `A habilitação de ${client.name} vence em ${expiry.toLocaleDateString('pt-BR')}.`,
+                        icon: Clock,
+                        color: 'amber',
+                        action: 'Avisar Cliente'
+                    });
+                }
+            }
+        });
     }
 
     if (alerts.length === 0) return null;
