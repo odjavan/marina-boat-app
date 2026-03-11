@@ -42,7 +42,16 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.7";
+const APP_VERSION = "v1.0.8";
+
+const translateAuthError = (message: string) => {
+  if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
+  if (message.includes('Email not confirmed')) return 'E-mail não confirmado. Verifique sua caixa de entrada.';
+  if (message.includes('Password is too short')) return 'A senha deve ter pelo menos 6 caracteres.';
+  if (message.includes('User not found')) return 'Usuário não encontrado.';
+  if (message.includes('Rate limit exceeded')) return 'Muitas tentativas. Tente novamente mais tarde.';
+  return message;
+};
 
 
 // --- Contextos ---
@@ -106,6 +115,93 @@ export const useAppContext = () => {
 };
 
 // --- Componente da Tela de Login ---
+
+const ResetPasswordScreen = ({ onComplete }: { onComplete: () => void }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const { addNotification } = useAppContext();
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      addNotification("As senhas não coincidem.", "error");
+      return;
+    }
+    if (newPassword.length < 6) {
+      addNotification("A senha deve ter pelo menos 6 caracteres.", "error");
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      addNotification("Erro ao redefinir: " + translateAuthError(error.message), "error");
+    } else {
+      addNotification("Senha alterada com sucesso! Faça login agora.", "success");
+      onComplete();
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+      <div className="z-10 w-full max-w-md p-6">
+        <Card className="p-8 shadow-2xl border-t-4 border-t-cyan-500">
+          <div className="text-center mb-8">
+            <div className="inline-flex p-3 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl mb-4">
+              <Lock className="text-white h-8 w-8" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Nova Senha</h1>
+            <p className="text-slate-500 text-sm mt-2">Defina sua nova senha de acesso.</p>
+          </div>
+
+          <form onSubmit={handleReset} className="space-y-4">
+            <div>
+              <Label>Nova Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="pl-10"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Confirmar Nova Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="pl-10"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-xs text-cyan-600 hover:text-cyan-700 font-medium"
+              >
+                {showPassword ? "Ocultar" : "Mostrar"} senhas
+              </button>
+            </div>
+            <Button type="submit" className="w-full h-11 text-base">
+              Salvar Nova Senha
+            </Button>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+};
 
 const LoginScreen = () => {
   const { login } = useAppContext();
@@ -215,12 +311,12 @@ const LoginScreen = () => {
                     Confirmo que sou humano
                   </span>
                   <div className={cn(
-                    "w-8 h-4 rounded-full relative transition-colors",
-                    isHuman ? "bg-cyan-500/20" : "bg-slate-200 dark:bg-slate-800"
+                    "w-10 h-5 rounded-full relative transition-all duration-300",
+                    isHuman ? "bg-cyan-500/20 ring-1 ring-cyan-500/50" : "bg-slate-200 dark:bg-slate-800"
                   )}>
                     <div className={cn(
-                      "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all",
-                      isHuman ? "left-4.5" : "left-0.5"
+                      "absolute top-1 w-3 h-3 rounded-full bg-white shadow-md transition-all duration-300",
+                      isHuman ? "left-6" : "left-1"
                     )} />
                   </div>
                 </div>
@@ -2416,6 +2512,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Se não estiver autenticado, renderizamos apenas a Tela de Login (controlada no MainContent, mas estruturalmente tratada aqui)
   if (!isAuthenticated) {
+    if (isResetting) {
+      return (
+        <>
+          <ResetPasswordScreen onComplete={() => setIsResetting(false)} />
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+            {notifications.map((n: any) => (
+              <div key={n.id} className="pointer-events-auto">
+                <Toast type={n.type} message={n.message} onClose={() => setNotifications(prev => prev.filter((nt: any) => nt.id !== n.id))} />
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
     return (
       <>
         {/* Notificação Toast para Tela de Login */}
@@ -2509,6 +2619,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState(false);
   const [agents, setAgents] = useState<User[]>([]);
   const [notificationSettings, setNotificationSettings] = useState({ email: true, push: false, sms: false });
+  const [isResetting, setIsResetting] = useState(false);
+
+  // Monitorar eventos de autenticação (Redefinição de Senha)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth Event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResetting(true);
+        setCurrentView('dashboard'); // Garantir que não estamos em views estranhas
+        setIsAuthenticated(false); // Mantém no formulário de senha até resetar
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const updateCatalogState = (newCatalog: Service[]) => {
     setCatalog(newCatalog);
@@ -2786,7 +2911,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
 
         if (error) {
-          addNotification(`Erro no login: ${error.message}`);
+          addNotification(`Erro no login: ${translateAuthError(error.message)}`, "error");
           return;
         }
 
