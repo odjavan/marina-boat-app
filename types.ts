@@ -123,4 +123,4 @@ export interface Notification {
   created_at: string;
 }
 
-export type ViewState = 'dashboard' | 'vessels' | 'services' | 'history' | 'clients' | 'profile' | 'settings' | 'help' | 'marinas' | 'agents' | 'quotations';
+export type ViewState = 'dashboard' | 'vessels' | 'services' | 'history' | 'clients' | 'profile' | 'settings' | 'help' | 'marinas' | 'agents' | 'quotations' | 'reports';

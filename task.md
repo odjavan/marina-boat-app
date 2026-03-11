@@ -13,7 +13,7 @@
     - [x] Traduzir erros do Supabase para o Português
     - [x] Criar tela/fluxo de Nova Senha dedicada
 - [x] Integrar Meteorologia (Ajustando API Key e UI do Dashboard - v1.0.9)
-- [ ] Implementar exportação de Relatórios Financeiros (PDF/CSV)
+- [x] Implementar exportação de Relatórios Financeiros (PDF/CSV) (v1.1.0)
 
 ## 📡 Roadmap Futuro
 - [x] Implementar PWA (Instalação como APP)

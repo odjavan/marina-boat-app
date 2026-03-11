@@ -40,9 +40,11 @@ import { VesselCard } from './components/VesselCard';
 import { DockMap } from './components/DockMap';
 import { Toast } from './components/Toast';
 
+import { FinanceView } from './components/FinanceView';
+
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.9";
+const APP_VERSION = "v1.1.0";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
@@ -420,6 +422,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
       { id: 'services', label: 'Todas Solicitações', icon: Briefcase },
       { id: 'history', label: 'Histórico', icon: FileText },
       { id: 'vessels', label: 'Todas Embarcações', icon: Ship },
+      { id: 'reports', label: 'Financeiro', icon: DollarSign },
     ],
     marina: [
       { id: 'dashboard', label: 'Painel da Marina', icon: LayoutDashboard },
@@ -429,6 +432,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
       { id: 'quotations', label: 'Orçamentos', icon: DollarSign },
       { id: 'agents', label: 'Equipe', icon: BadgeIcon },
       { id: 'history', label: 'Histórico', icon: FileText },
+      { id: 'reports', label: 'Faturamento', icon: TrendingUp },
       { id: 'profile', label: 'Perfil', icon: UserIcon },
     ],
     cliente: [
@@ -3650,6 +3654,7 @@ const MainContent = () => {
     case 'agents': return <Agents />;
     case 'profile': return <Profile />;
     case 'settings': return <SettingsPage />;
+    case 'reports': return <FinanceView />;
     case 'help': return <Help />;
     default: return <Dashboard />;
   }
