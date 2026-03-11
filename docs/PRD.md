@@ -1,31 +1,28 @@
-# PRD: [Nome do Projeto]
+# PRD: Marina Boat
 
 ## 🎯 Objetivo Principal
-[Descreva aqui o que o software deve fazer, seu impacto e a razão de existir. Sem entrar em detalhes técnicos inicialmente.]
-
-## 📝 User Stories (Histórias de Usuário)
-* Como [Tipo de Usuário], eu quero [Ação/Funcionalidade], para que [Benefício/Resultado].
-* ...
+Transformar o Marina Boat em um Progressive Web App (PWA) instalável, permitindo que os usuários o utilizem como um aplicativo nativo "standalone", sem as barras de navegação do browser, com ícone próprio e experiência premium.
 
 ## 🏗️ Requisitos Não Funcionais
-* **Performance:** [Ex: O carregamento não pode passar de 2s]
-* **Escalabilidade:** [Ex: Deve aguentar 100 usuários simultâneos iniciais]
-* **Segurança:** [Ex: Senhas criptografadas, autenticação via JWT]
+* **Acessibilidade:** Deve ser instalável em dispositivos Android e iOS via Chrome/Safari.
+* **UX:** Experiência de "app nativo" (standalone).
+* **Segurança:** Requer HTTPS (garantido pelo deploy).
+* **Controle de Versão:** **OBRIGATÓRIO** incrementar a versão da aplicação em cada entrega para facilitar a validação do deploy e evitar problemas de cache.
 
 ## 📋 Escopo Funcional (O que o sistema FAZ)
-1. **Módulo A:**
-   * [Detalhe 1]
-   * [Detalhe 2]
-2. **Módulo B:**
-   * [Detalhe 1]
+1. **Manifesto Web:** Implementação do `manifest.json` com configurações de nome, ícones e modo de exibição.
+2. **Ícones PWA:** Criação e disponibilização de ícones em 192x192 e 512x512.
+3. **Integração HTML:** Vinculação do manifesto e meta tags de app no `index.html`.
 
-## 🚫 Fora de Escopo (O que o sistema NÃO FAZ agora)
-* [Funcionalidade futura ou descartada para a V1]
+## 🛠️ Diretrizes de Entrega e Deploy
+Em cada finalização de tarefa, o Agente deve:
+1. **Versionar:** Incrementar o campo `version` no `package.json` e a constante `APP_VERSION` no `App.tsx`.
+2. **Commit & Push:** Realizar o Git Commit (com descrição clara) e Git Push para o repositório.
+3. **Citação de Deploy:** Informar explicitamente ao usuário se é necessário realizar o deploy (ex: via Coolify/VPS) e qual a **Nova Versão** que ele deve visualizar após a atualização.
 
 ## 🔄 Fluxo do Usuário (User Journey)
-1. O usuário acessa a página inicial.
-2. Ele clica em X.
-3. O sistema valida Y e retorna Z.
-
----
-> **Aviso para a IA (Ralph):** Este documento é a LEI. Se algo no código conflitar com este PRD, o PRD vence. Em caso de atualizações de escopo, este documento DEVE ser modificado.
+1. O usuário acessa o site via dispositivo móvel.
+2. O navegador detecta o PWA e oferece a opção "Instalar App".
+3. O usuário instala o app.
+4. O app aparece na home screen com o ícone do Marina Boat.
+5. Ao abrir, o app carrega em tela cheia (standalone).

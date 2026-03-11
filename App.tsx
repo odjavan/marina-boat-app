@@ -42,7 +42,7 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.3";
+const APP_VERSION = "v1.0.4";
 
 
 // --- Contextos ---

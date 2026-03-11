@@ -1,0 +1,22 @@
+{
+  "short_name": "Marina Boat",
+  "name": "Marina Boat - Gestão de Embarcações",
+  "description": "Sistema de gerenciamento e controle de barcos.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f172a",
+  "background_color": "#ffffff"
+}

@@ -12,6 +12,12 @@
 - [ ] Implementar exportação de Relatórios Financeiros (PDF/CSV)
 
 ## 📡 Roadmap Futuro
+- [x] Implementar PWA (Instalação como APP)
+    - [x] Criar pasta `public` (se necessário)
+    - [x] Criar `manifest.json`
+    - [x] Gerar/Adicionar ícones (192x192, 512x512)
+    - [x] Vincular no `index.html`
+- [x] Atualizar PRD e Versionamento (v1.0.4)
 - [ ] Notificações Push nativas
 - [ ] Dashboard específico do Marinheiro
 - [ ] Pagamentos integrados (Stripe/Cakto)
