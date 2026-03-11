@@ -20,9 +20,9 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose
     };
 
     const colors = {
-        success: 'border-green-500/30 bg-green-500/10 text-green-50',
-        error: 'border-red-500/30 bg-red-500/10 text-red-50',
-        info: 'border-blue-500/30 bg-blue-500/10 text-blue-50'
+        success: 'border-emerald-500 bg-emerald-600 text-white shadow-emerald-200/50',
+        error: 'border-red-500 bg-red-600 text-white shadow-red-200/50',
+        info: 'border-blue-500 bg-blue-600 text-white shadow-blue-200/50'
     };
 
     return (

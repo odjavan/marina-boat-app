@@ -1,7 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import {
   Anchor, Wind, Droplets, User as UserIcon, LogOut, Settings,
-  HelpCircle, Home, Ship, Briefcase, Plus, Search,
+  HelpCircle, Home, Ship, Briefcase, Plus, Search, Shield,
   CheckCircle2, Clock, AlertTriangle, Moon, Sun, Menu, LayoutDashboard,
   Lock, Mail, Eye, EyeOff, Save, Phone, Upload, X, FileText, Image as ImageIcon, Users, Edit, Trash2, Badge as BadgeIcon,
   TrendingUp, Activity as ActivityLucide, Building2, DollarSign, ClipboardList, Smartphone
@@ -42,7 +42,7 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.5";
+const APP_VERSION = "v1.0.6";
 
 
 // --- Contextos ---
@@ -112,15 +112,35 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isHuman, setIsHuman] = useState(false);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const { addNotification } = useAppContext();
 
-  // Demonstração apenas
-  const handleDemoLogin = (type: UserType) => {
-    login(type);
-  };
-
+  // Manual login
   const handleManualLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isHuman) {
+      addNotification("Por favor, confirme que você é humano.", "error");
+      return;
+    }
     login('manual' as any, email, password);
+  };
+
+  const handlePasswordRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryEmail) return;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
+      redirectTo: 'https://marinaboat.boatpass.com.br'
+    });
+
+    if (error) {
+      addNotification("Erro ao enviar e-mail: " + error.message, "error");
+    } else {
+      addNotification("E-mail de recuperação enviado com sucesso!", "success");
+      setIsRecoveryModalOpen(false);
+    }
   };
 
   return (
@@ -178,22 +198,42 @@ const LoginScreen = () => {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full h-11 text-base">
+            <div>
+              <div 
+                className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer hover:border-cyan-500/50 transition-colors group"
+                onClick={() => setIsHuman(!isHuman)}
+              >
+                <div className={cn(
+                  "h-5 w-5 rounded border-2 flex items-center justify-center transition-all",
+                  isHuman ? "bg-cyan-500 border-cyan-500" : "border-slate-300 dark:border-slate-600 group-hover:border-cyan-400"
+                )}>
+                  {isHuman && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                </div>
+                <div className="flex-1 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-slate-400" />
+                    Confirmo que sou humano
+                  </span>
+                  <div className={cn(
+                    "w-8 h-4 rounded-full relative transition-colors",
+                    isHuman ? "bg-cyan-500/20" : "bg-slate-200 dark:bg-slate-800"
+                  )}>
+                    <div className={cn(
+                      "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all",
+                      isHuman ? "left-4.5" : "left-0.5"
+                    )} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full h-11 text-base" disabled={!isHuman}>
               Entrar
             </Button>
             <div className="text-center mt-4">
               <button
                 type="button"
-                onClick={async () => {
-                  const email = prompt("Digite seu e-mail para recuperar a senha:");
-                  if (email) {
-                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                      redirectTo: window.location.origin
-                    });
-                    if (error) alert("Erro ao enviar e-mail: " + error.message);
-                    else alert("E-mail de recuperação enviado com sucesso!");
-                  }
-                }}
+                onClick={() => setIsRecoveryModalOpen(true)}
                 className="text-sm text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
               >
                 Esqueci minha senha
@@ -201,6 +241,40 @@ const LoginScreen = () => {
             </div>
           </form>
         </Card>
+
+        <Dialog 
+          isOpen={isRecoveryModalOpen} 
+          onClose={() => setIsRecoveryModalOpen(false)} 
+          title="Recuperar Senha"
+        >
+          <form onSubmit={handlePasswordRecovery} className="space-y-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Digite seu e-mail abaixo. Enviaremos um link para você redefinir sua senha com segurança.
+            </p>
+            <div>
+              <Label>Seu E-mail</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                <Input
+                  type="email"
+                  placeholder="seu@email.com"
+                  className="pl-10"
+                  value={recoveryEmail}
+                  onChange={(e) => setRecoveryEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => setIsRecoveryModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1">
+                Enviar E-mail
+              </Button>
+            </div>
+          </form>
+        </Dialog>
         <p className="text-center text-slate-400 text-[10px] mt-6 font-medium uppercase tracking-widest">
           © 2024-2026 Boat Pass • {APP_VERSION}
         </p>

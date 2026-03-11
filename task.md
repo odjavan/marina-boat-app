@@ -9,11 +9,17 @@
 ## 🍱 Funcionalidades v1.0 (MVP)
 - [ ] Ativar Alertas de Documentos (Frontend avisando sobre validade)
 - [/] Integrar Meteorologia (Ajustando API Key e UI do Dashboard - v1.0.3)
-- [/] Refinamento de Segurança e UX (v1.0.5)
-    - [ ] Remover "Acesso Rápido" da tela de login
-    - [ ] Adicionar toggle de senha (olhinho) em todos os campos de senha
-    - [ ] Implementar fluxo de "Esqueci minha senha"
-    - [ ] Validar fluxos de autenticação do Supabase
+- [x] Refinamento de Segurança e UX (v1.0.5)
+    - [x] Remover "Acesso Rápido" da tela de login
+    - [x] Adicionar toggle de senha (olhinho) em todos os campos de senha
+    - [x] Implementar fluxo de "Esqueci minha senha"
+    - [x] Atualizar versão para v1.0.5
+- [x] Correção de Login e UX (v1.0.6)
+    - [x] Implementar Checkbox "Confirmo que sou humano" (Captcha)
+    - [x] Criar Modal de Recuperação de Senha estilizado (substituindo prompt)
+    - [x] Melhorar legibilidade das cores do Toast (Erro)
+    - [x] Atualizar Site URL e Redirecionamento para Produção
+    - [x] Atualizar versão para v1.0.6
 - [ ] Implementar exportação de Relatórios Financeiros (PDF/CSV)
 
 ## 📡 Roadmap Futuro
