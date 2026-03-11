@@ -42,7 +42,7 @@ import { Toast } from './components/Toast';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.0.8";
+const APP_VERSION = "v1.0.9";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
@@ -608,7 +608,10 @@ const Dashboard = () => {
               value={marinaLocation.name}
               onChange={(e) => {
                 const loc = PRESET_LOCATIONS.find(l => l.name === e.target.value);
-                if (loc) setLocationToConfirm(loc);
+                if (loc) {
+                    setMarinaLocation(loc);
+                    addNotification(`Clima atualizado para ${loc.name}`, 'info');
+                }
               }}
             >
               {PRESET_LOCATIONS.map(loc => (
@@ -705,34 +708,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Confirmação de Troca de Região */}
-      <Dialog
-        isOpen={!!locationToConfirm}
-        onClose={() => setLocationToConfirm(null)}
-        title="Confirmar Mudança de Região"
-      >
-        <div className="space-y-4">
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-            <p className="text-sm text-slate-700 dark:text-slate-300">
-              Você deseja alterar a exibição climática para <strong>{locationToConfirm?.name}</strong>?
-            </p>
-          </div>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setLocationToConfirm(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={() => {
-              if (locationToConfirm) {
-                setMarinaLocation(locationToConfirm);
-                addNotification(`Região alterada para ${locationToConfirm.name}`, 'success');
-                setLocationToConfirm(null);
-              }
-            }}>
-              Confirmar Alteração
-            </Button>
-          </div>
-        </div>
-      </Dialog>
 
       {/* Guia de Instalação PWA */}
       <InstallGuide
