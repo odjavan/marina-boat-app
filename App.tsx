@@ -44,7 +44,7 @@ import { FinanceView } from './components/FinanceView';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.1.1";
+const APP_VERSION = "v1.1.2";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
@@ -2907,11 +2907,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (profileError || !profileData) {
             console.log("Perfil não encontrado, tentando auto-provisão...");
             // Auto-provisão: Criar perfil caso não exista
-            const isAlexandre = data.user.email === 'alexandre.djavan@gmail.com';
+            // Garantir comparação de email em lowercase
+            const isAlexandre = data.user.email?.toLowerCase() === 'alexandre.djavan@gmail.com';
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
               .insert({
                 id: data.user.id,
+                email: data.user.email, // FALTAVA ESTE CAMPO!
                 full_name: data.user.user_metadata?.full_name || email.split('@')[0],
                 phone: '',
                 user_type: isAlexandre ? 'admin' : 'cliente'
@@ -2920,7 +2922,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               .single();
 
             if (createError) {
-              addNotification("Erro ao criar perfil automático. Contate o suporte.", "error");
+              console.error("Erro na criação de perfil:", createError);
+              addNotification("Erro ao criar perfil: " + createError.message, "error");
               return;
             }
             profileData = newProfile;
@@ -2933,7 +2936,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             email: data.user.email || email,
             phone: profileData.phone || '',
             user_type: profileData.user_type || 'cliente',
-            avatar_initial: profileData.full_name ? profileData.full_name[0].toUpperCase() : email[0].toUpperCase(),
+            avatar_initial: profileData.full_name ? profileData.full_name[0].toUpperCase() : (email ? email[0].toUpperCase() : '?'),
             created_at: profileData.created_at
           };
         } else {
