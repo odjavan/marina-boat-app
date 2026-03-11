@@ -104,6 +104,8 @@ interface AppContextType {
   updateQuotationStatus: (id: string, status: 'Aprovado' | 'Recusado') => Promise<void>;
   marinaLocation: LocationData;
   setMarinaLocation: (location: LocationData) => void;
+  isResetting: boolean;
+  setIsResetting: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -2508,7 +2510,7 @@ const SettingsPage = () => {
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { notifications, setNotifications, isAuthenticated, currentMarina, currentUser } = useAppContext();
+  const { notifications, setNotifications, isAuthenticated, currentMarina, currentUser, isResetting, setIsResetting } = useAppContext();
 
   // Se não estiver autenticado, renderizamos apenas a Tela de Login (controlada no MainContent, mas estruturalmente tratada aqui)
   if (!isAuthenticated) {
