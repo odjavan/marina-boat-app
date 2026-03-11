@@ -14,6 +14,7 @@
     - [x] Criar tela/fluxo de Nova Senha dedicada
 - [x] Integrar Meteorologia (Ajustando API Key e UI do Dashboard - v1.0.9)
 - [x] Implementar exportação de Relatórios Financeiros (PDF/CSV) (v1.1.0)
+- [x] Correção de Login: Auto-provisão de perfil (v1.1.1)
 
 ## 📡 Roadmap Futuro
 - [x] Implementar PWA (Instalação como APP)

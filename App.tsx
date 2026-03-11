@@ -44,7 +44,7 @@ import { FinanceView } from './components/FinanceView';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.1.0";
+const APP_VERSION = "v1.1.1";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
@@ -2905,8 +2905,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             .single();
 
           if (profileError || !profileData) {
-            addNotification("Erro ao carregar perfil do usuário");
-            return;
+            console.log("Perfil não encontrado, tentando auto-provisão...");
+            // Auto-provisão: Criar perfil caso não exista
+            const isAlexandre = data.user.email === 'alexandre.djavan@gmail.com';
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+                phone: '',
+                user_type: isAlexandre ? 'admin' : 'cliente'
+              })
+              .select()
+              .single();
+
+            if (createError) {
+              addNotification("Erro ao criar perfil automático. Contate o suporte.", "error");
+              return;
+            }
+            profileData = newProfile;
           }
 
           // Mapear perfil para User
