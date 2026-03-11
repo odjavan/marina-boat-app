@@ -2898,7 +2898,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (data.user) {
           // Buscar perfil do usuário
-          const { data: profileData, error: profileError } = await supabase
+          let { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
