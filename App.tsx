@@ -44,7 +44,7 @@ import { FinanceView } from './components/FinanceView';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.1.3";
+const APP_VERSION = "1.1.4";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
