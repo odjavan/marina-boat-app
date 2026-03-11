@@ -44,7 +44,7 @@ import { FinanceView } from './components/FinanceView';
 
 import { InstallGuide } from './components/InstallGuide';
 
-const APP_VERSION = "v1.1.2";
+const APP_VERSION = "v1.1.3";
 
 const translateAuthError = (message: string) => {
   if (message.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
@@ -2909,24 +2909,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // Auto-provisão: Criar perfil caso não exista
             // Garantir comparação de email em lowercase
             const isAlexandre = data.user.email?.toLowerCase() === 'alexandre.djavan@gmail.com';
-            const { data: newProfile, error: createError } = await supabase
+            const { error: createError } = await supabase
               .from('profiles')
               .insert({
                 id: data.user.id,
-                email: data.user.email, // FALTAVA ESTE CAMPO!
+                email: data.user.email,
                 full_name: data.user.user_metadata?.full_name || email.split('@')[0],
                 phone: '',
                 user_type: isAlexandre ? 'admin' : 'cliente'
-              })
-              .select()
-              .single();
+              });
 
             if (createError) {
               console.error("Erro na criação de perfil:", createError);
-              addNotification("Erro ao criar perfil: " + createError.message, "error");
+              addNotification("Erro ao criar perfil. Tente rodar o script SQL de correção.", "error");
               return;
             }
-            profileData = newProfile;
+            
+            // Buscar perfil novamente após insert SEM select para garantir que não dispare a política de insert recursiva
+            const { data: retryProfile, error: retryError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            
+            if (retryError || !retryProfile) {
+              addNotification("Perfil criado, mas erro ao carregar. Tente entrar novamente.", "error");
+              return;
+            }
+            profileData = retryProfile;
           }
 
           // Mapear perfil para User
